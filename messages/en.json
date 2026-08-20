@@ -1,0 +1,241 @@
+{
+  "nav": {
+    "home": "Home",
+    "offers": "Offers",
+    "howItWorks": "How it works",
+    "createOffer": "Post an offer",
+    "login": "Login",
+    "register": "Sign up",
+    "myAccount": "My account",
+    "logout": "Logout"
+  },
+  "home": {
+    "hero": {
+      "badge": "P2P Platform · African Diaspora",
+      "title": "Peer to peer, with complete confidence",
+      "subtitle": "The platform built for the African diaspora. Currencies, travel kilos or sea freight — find a trusted individual, no middleman.",
+      "ctaView": "Browse offers",
+      "ctaPost": "Post an offer",
+      "trust1": "Free sign up",
+      "trust2": "Direct payment, no hidden fees",
+      "trust3": "Verified profiles and reviews",
+      "cta": "Browse offers"
+    },
+    "tabs": {
+      "devises": "Currencies",
+      "kilosVoyage": "Travel Kilos",
+      "fretBateau": "Sea Freight"
+    },
+    "currencies": {
+      "title": "Available currencies"
+    },
+    "offers": {
+      "sectionTitle": "Offers right now",
+      "sectionSubtitle": "A snapshot of exchanges from the community",
+      "searchPlaceholder": "Search",
+      "countryLabel": "Seller country",
+      "sortLabel": "Sort by",
+      "sortRecent": "Most recent",
+      "sortRateDesc": "Best rate ↓",
+      "sortRateAsc": "Rate ascending ↑",
+      "sortAmountDesc": "Most available",
+      "paymentLabel": "Payment method",
+      "amountLabel": "Available amount",
+      "allMethods": "All methods",
+      "selectCountry": "Select a country first",
+      "clearSelection": "× Clear selection",
+      "clearFilters": "Clear filters ({count})",
+      "resultCount": "{count} offer(s)"
+    },
+    "travelKilo": {
+      "sectionTitle": "Travel kilos",
+      "sectionSubtitle": "Find a traveller to send your parcels",
+      "searchPlaceholder": "City, traveller...",
+      "departureLabel": "Departure country",
+      "destinationLabel": "Destination country",
+      "allCountries": "All countries",
+      "cardDate": "Travel date",
+      "cardKg": "Available kilos",
+      "cardPrice": "Price / kg",
+      "loginToContact": "Log in",
+      "resultCount": "{count} offer(s)",
+      "empty": "No travel kilo offers match."
+    },
+    "boatShipping": {
+      "sectionTitle": "Sea freight",
+      "sectionSubtitle": "Ship your parcels by sea",
+      "searchPlaceholder": "Port, country...",
+      "departureLabel": "Departure country",
+      "destinationLabel": "Destination country",
+      "allCountries": "All countries",
+      "cardDate": "Ship departure date",
+      "cardLbs": "Available lbs",
+      "cardPrice": "Price / lb",
+      "loginToContact": "Log in",
+      "resultCount": "{count} offer(s)",
+      "empty": "No sea freight offers match."
+    },
+    "howItWorks": {
+      "title": "How it works",
+      "step1": { "num": "01", "title": "Browse offers", "desc": "View available offers from individuals — no account needed." },
+      "step2": { "num": "02", "title": "Sign up", "desc": "Create your free account to unlock seller contact details." },
+      "step3": { "num": "03", "title": "Deal directly", "desc": "Contact the person by phone or WhatsApp and arrange the details." }
+    },
+    "why": {
+      "title": "Why SimplexPay",
+      "p1": { "title": "Verified community", "desc": "Every profile is verified before being allowed to post an offer." },
+      "p2": { "title": "No middleman", "desc": "You exchange directly with another individual at the rate you choose." },
+      "p3": { "title": "Post-transaction reviews", "desc": "Rate your exchanges to build trust within the community." },
+      "p4": { "title": "Available support", "desc": "Have a question? Our team responds quickly by email or WhatsApp." }
+    },
+    "cta": {
+      "title": "Ready to get started?",
+      "subtitle": "Join the SimplexPay community — it's free.",
+      "button": "Create my account"
+    }
+  },
+  "footer": {
+    "tagline": "The peer-to-peer services platform for the African diaspora.",
+    "product": "Product",
+    "account": "Account",
+    "legal": "Legal",
+    "seeOffers": "Browse offers",
+    "postOffer": "Post an offer",
+    "howItWorks": "How it works",
+    "login": "Login",
+    "register": "Sign up",
+    "myAccount": "My account",
+    "terms": "Legal notices",
+    "privacy": "Privacy policy",
+    "tos": "Terms of use",
+    "copyright": "© 2026 SimplexPay. Built for the African diaspora."
+  },
+  "offers": {
+    "title": "Exchange offers",
+    "filters": {
+      "sellCurrency": "Sold currency",
+      "buyCurrency": "Bought currency",
+      "all": "All",
+      "apply": "Filter"
+    },
+    "card": {
+      "rate": "Rate",
+      "available": "Available",
+      "min": "Min",
+      "max": "Max",
+      "minMax": "Min / Max",
+      "expires": "Expires",
+      "contact": "Contact",
+      "loginToContact": "Log in to see contact details",
+      "via": "Via"
+    },
+    "empty": "No offers match these criteria.",
+    "loadMore": "Load more",
+    "total": "{count} offer(s) available"
+  },
+  "offer": {
+    "detail": "Offer detail",
+    "creator": "Seller",
+    "paymentFrom": "Payment on seller side",
+    "paymentTo": "Payment on buyer side",
+    "contactInfo": "Contact details",
+    "phone": "Phone",
+    "whatsapp": "WhatsApp",
+    "loginRequired": "Sign up to see contact details",
+    "transactions": "completed transaction(s)",
+    "rating": "Rating",
+    "notes": "Seller notes",
+    "buyEquivalent": "Equivalent in {currency}",
+    "back": "Back to offers"
+  },
+  "auth": {
+    "login": {
+      "title": "Login",
+      "subtitle": "Access your SimplexPay account",
+      "email": "Email address",
+      "password": "Password",
+      "submit": "Log in",
+      "noAccount": "Don't have an account?",
+      "register": "Sign up"
+    },
+    "register": {
+      "title": "Sign up",
+      "subtitle": "Join SimplexPay for free",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "email": "Email address",
+      "password": "Password",
+      "phone": "Phone number",
+      "country": "Country",
+      "whatsapp": "WhatsApp (optional)",
+      "submit": "Create my account",
+      "hasAccount": "Already registered?",
+      "login": "Log in",
+      "passwordHint": "At least 8 characters, one uppercase and one digit"
+    }
+  },
+  "createOffer": {
+    "title": "Post an offer",
+    "category": "Category",
+    "categoryDevises": "Currencies",
+    "categoryKilos": "Travel Kilos",
+    "categoryBateau": "Sea Freight",
+    "type": "Offer type",
+    "typeSell": "I sell",
+    "typeBuy": "I buy",
+    "sellCurrency": "Currency I sell",
+    "buyCurrency": "Currency I buy",
+    "sellCountry": "Country of sold currency",
+    "buyCountry": "Country of bought currency",
+    "amount": "Available amount",
+    "rate": "Exchange rate",
+    "rateHelp": "Units of sold currency per 1 unit of bought currency",
+    "minAmount": "Minimum amount",
+    "maxAmount": "Maximum amount",
+    "notes": "Notes (optional)",
+    "expiryHours": "Validity duration",
+    "paymentMethods": "Payment methods",
+    "from": "Seller side",
+    "to": "Buyer side",
+    "availableKg": "Available kilos",
+    "pricePerKg": "Price per kilo",
+    "travelDate": "Travel date",
+    "departureCity": "Departure city",
+    "destinationCity": "Destination city",
+    "departureCountry": "Departure country",
+    "destinationCountry": "Destination country",
+    "availableLbs": "Available lbs",
+    "pricePerLb": "Price per lb",
+    "shipDepartureDate": "Ship departure date",
+    "departurePort": "Departure port",
+    "destinationPort": "Destination port",
+    "selectCountry": "Select a country",
+    "submit": "Post offer",
+    "success": "Offer posted successfully!"
+  },
+  "account": {
+    "title": "My account",
+    "myOffers": "My offers",
+    "noOffers": "You don't have any offers yet.",
+    "createFirst": "Post my first offer",
+    "cancel": "Cancel",
+    "cancelConfirm": "Do you want to cancel this offer?",
+    "status": {
+      "Open": "Active",
+      "Cancelled": "Cancelled",
+      "Expired": "Expired",
+      "Filled": "Filled",
+      "PartiallyFilled": "Partial"
+    }
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "retry": "Try again",
+    "cancel": "Cancel",
+    "save": "Save",
+    "close": "Close",
+    "yes": "Yes",
+    "no": "No"
+  }
+}

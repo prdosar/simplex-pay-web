@@ -1,0 +1,90 @@
+'use client'
+
+import { useTranslations } from 'next-intl'
+import { flagUrl } from '@/lib/utils'
+import type { TravelKiloOfferDto } from '@/types/api'
+
+interface Props {
+  offer: TravelKiloOfferDto
+  isAuthenticated: boolean
+  locale: string
+}
+
+export default function TravelKiloCard({ offer, isAuthenticated, locale }: Props) {
+  const t = useTranslations('home.travelKilo')
+
+  const dateStr = new Date(offer.travelDate).toLocaleDateString(
+    locale === 'fr' ? 'fr' : 'en',
+    { day: 'numeric', month: 'short', year: 'numeric' }
+  )
+
+  return (
+    <div
+      className="bg-white border rounded-2xl p-[22px] transition-all cursor-default"
+      style={{ borderColor: '#e2e8f0' }}
+      onMouseEnter={e => {
+        e.currentTarget.style.borderColor = '#0d9488'
+        e.currentTarget.style.boxShadow = '0 4px 20px -4px rgba(13,148,136,0.2)'
+      }}
+      onMouseLeave={e => {
+        e.currentTarget.style.borderColor = '#e2e8f0'
+        e.currentTarget.style.boxShadow = 'none'
+      }}
+    >
+      {/* Header: departure → destination */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-1.5 font-bold text-[15px] min-w-0">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={flagUrl(offer.departureCountryCode)} alt="" style={{ width: 22, height: 16 }} className="rounded-sm object-cover shrink-0" />
+          <span className="truncate">{offer.departureCity}</span>
+          <span style={{ color: '#94a3b8' }} className="shrink-0">→</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={flagUrl(offer.destinationCountryCode)} alt="" style={{ width: 22, height: 16 }} className="rounded-sm object-cover shrink-0" />
+          <span className="truncate">{offer.destinationCity}</span>
+        </div>
+        <span className="text-[11px] font-semibold px-[9px] py-[3px] rounded-full shrink-0 ml-2" style={{ color: '#0d9488', background: '#ccfbf1' }}>
+          Active
+        </span>
+      </div>
+
+      {/* Date */}
+      <p className="text-[11px] uppercase tracking-[0.06em] mb-1" style={{ color: '#64748b' }}>{t('cardDate')}</p>
+      <p className="text-[22px] font-extrabold mb-4" style={{ color: '#0d9488' }}>{dateStr}</p>
+
+      {/* Kg + Price */}
+      <div className="grid grid-cols-2 gap-[10px] mb-4 text-[13px]">
+        <div>
+          <p className="mb-0.5" style={{ color: '#64748b' }}>{t('cardKg')}</p>
+          <p className="font-bold">{offer.availableKg.toLocaleString()} kg</p>
+        </div>
+        <div>
+          <p className="mb-0.5" style={{ color: '#64748b' }}>{t('cardPrice')}</p>
+          <p className="font-bold">{offer.pricePerKg.toLocaleString()} / kg</p>
+        </div>
+      </div>
+
+      {/* Notes */}
+      {offer.notes && (
+        <p className="text-[12px] mb-3 line-clamp-2" style={{ color: '#64748b' }}>{offer.notes}</p>
+      )}
+
+      {/* Creator */}
+      <div className="flex items-center justify-between pt-3.5" style={{ borderTop: '1px solid #f1f5f9' }}>
+        <div className="flex items-center gap-2">
+          <div className="w-[26px] h-[26px] rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0" style={{ background: '#0d9488' }}>
+            {offer.creatorFirstName[0]}
+          </div>
+          <span className="text-[13px] font-semibold">{offer.creatorFirstName}</span>
+          {offer.creatorRating > 0 && (
+            <span className="text-xs" style={{ color: '#64748b' }}>★ {offer.creatorRating.toFixed(1)}</span>
+          )}
+        </div>
+        {isAuthenticated ? (
+          <span className="text-xs font-bold" style={{ color: '#0d9488' }}>{offer.creatorPhone}</span>
+        ) : (
+          <span className="text-xs font-semibold" style={{ color: '#94a3b8' }}>{t('loginToContact')}</span>
+        )}
+      </div>
+    </div>
+  )
+}

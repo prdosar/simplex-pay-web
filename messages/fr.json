@@ -1,0 +1,241 @@
+{
+  "nav": {
+    "home": "Accueil",
+    "offers": "Offres",
+    "howItWorks": "Comment ça marche",
+    "createOffer": "Publier une offre",
+    "login": "Connexion",
+    "register": "Inscription",
+    "myAccount": "Mon compte",
+    "logout": "Déconnexion"
+  },
+  "home": {
+    "hero": {
+      "badge": "Plateforme P2P · Diaspora africaine",
+      "title": "Entre particuliers, en toute confiance",
+      "subtitle": "La plateforme pensée pour la diaspora africaine. Devises, kilos voyage ou fret maritime — trouvez un particulier de confiance, sans intermédiaire.",
+      "ctaView": "Voir les offres",
+      "ctaPost": "Publier une offre",
+      "trust1": "Inscription gratuite",
+      "trust2": "Paiement direct, sans frais cachés",
+      "trust3": "Profils et avis vérifiés",
+      "cta": "Voir les offres"
+    },
+    "tabs": {
+      "devises": "Devises",
+      "kilosVoyage": "Kilos Voyage",
+      "fretBateau": "Fret Bateau"
+    },
+    "currencies": {
+      "title": "Devises disponibles"
+    },
+    "offers": {
+      "sectionTitle": "Offres en ce moment",
+      "sectionSubtitle": "Un aperçu des échanges proposés par la communauté",
+      "searchPlaceholder": "Recherche",
+      "countryLabel": "Pays vendeur",
+      "sortLabel": "Trier par",
+      "sortRecent": "Plus récentes",
+      "sortRateDesc": "Meilleur taux ↓",
+      "sortRateAsc": "Taux croissant ↑",
+      "sortAmountDesc": "Plus disponible",
+      "paymentLabel": "Moyen de paiement",
+      "amountLabel": "Montant disponible",
+      "allMethods": "Tous les modes",
+      "selectCountry": "Sélectionnez un pays",
+      "clearSelection": "× Effacer sélection",
+      "clearFilters": "Effacer les filtres ({count})",
+      "resultCount": "{count} offre(s)"
+    },
+    "travelKilo": {
+      "sectionTitle": "Kilos voyage",
+      "sectionSubtitle": "Trouvez un voyageur pour envoyer vos colis",
+      "searchPlaceholder": "Ville, voyageur...",
+      "departureLabel": "Pays de départ",
+      "destinationLabel": "Pays de destination",
+      "allCountries": "Tous les pays",
+      "cardDate": "Date de voyage",
+      "cardKg": "Kilos disponibles",
+      "cardPrice": "Prix / kg",
+      "loginToContact": "Connectez-vous",
+      "resultCount": "{count} offre(s)",
+      "empty": "Aucune offre de kilos voyage ne correspond."
+    },
+    "boatShipping": {
+      "sectionTitle": "Fret bateau",
+      "sectionSubtitle": "Expédiez vos colis par voie maritime",
+      "searchPlaceholder": "Port, pays...",
+      "departureLabel": "Pays de départ",
+      "destinationLabel": "Pays de destination",
+      "allCountries": "Tous les pays",
+      "cardDate": "Date départ bateau",
+      "cardLbs": "Livres disponibles",
+      "cardPrice": "Prix / livre",
+      "loginToContact": "Connectez-vous",
+      "resultCount": "{count} offre(s)",
+      "empty": "Aucune offre de fret bateau ne correspond."
+    },
+    "howItWorks": {
+      "title": "Comment ça marche",
+      "step1": { "num": "01", "title": "Parcourez les offres", "desc": "Consultez les offres proposées par des particuliers, sans créer de compte." },
+      "step2": { "num": "02", "title": "Inscrivez-vous", "desc": "Créez votre compte gratuitement pour débloquer les coordonnées des vendeurs." },
+      "step3": { "num": "03", "title": "Concluez directement", "desc": "Contactez la personne par téléphone ou WhatsApp et convenez des modalités." }
+    },
+    "why": {
+      "title": "Pourquoi SimplexPay",
+      "p1": { "title": "Communauté vérifiée", "desc": "Chaque profil est vérifié avant de pouvoir publier une offre." },
+      "p2": { "title": "Sans intermédiaire", "desc": "Vous échangez directement avec un autre particulier, au taux que vous choisissez." },
+      "p3": { "title": "Avis après transaction", "desc": "Notez vos échanges pour renforcer la confiance de la communauté." },
+      "p4": { "title": "Support disponible", "desc": "Une question ? Notre équipe répond rapidement par email ou WhatsApp." }
+    },
+    "cta": {
+      "title": "Prêt à échanger ?",
+      "subtitle": "Rejoignez la communauté SimplexPay, c'est gratuit.",
+      "button": "Créer mon compte"
+    }
+  },
+  "footer": {
+    "tagline": "La plateforme de services entre particuliers pour la diaspora africaine.",
+    "product": "Produit",
+    "account": "Compte",
+    "legal": "Légal",
+    "seeOffers": "Voir les offres",
+    "postOffer": "Publier une offre",
+    "howItWorks": "Comment ça marche",
+    "login": "Connexion",
+    "register": "Inscription",
+    "myAccount": "Mon compte",
+    "terms": "Mentions légales",
+    "privacy": "Confidentialité",
+    "tos": "Conditions d'utilisation",
+    "copyright": "© 2026 SimplexPay. Fait pour la diaspora africaine."
+  },
+  "offers": {
+    "title": "Offres d'échange",
+    "filters": {
+      "sellCurrency": "Devise vendue",
+      "buyCurrency": "Devise achetée",
+      "all": "Toutes",
+      "apply": "Filtrer"
+    },
+    "card": {
+      "rate": "Taux",
+      "available": "Disponible",
+      "min": "Min",
+      "max": "Max",
+      "minMax": "Min / Max",
+      "expires": "Expire",
+      "contact": "Contacter",
+      "loginToContact": "Connectez-vous pour voir les coordonnées",
+      "via": "Via"
+    },
+    "empty": "Aucune offre ne correspond à ces critères.",
+    "loadMore": "Charger plus",
+    "total": "{count} offre(s) disponible(s)"
+  },
+  "offer": {
+    "detail": "Détail de l'offre",
+    "creator": "Vendeur",
+    "paymentFrom": "Paiement côté vendeur",
+    "paymentTo": "Paiement côté acheteur",
+    "contactInfo": "Coordonnées",
+    "phone": "Téléphone",
+    "whatsapp": "WhatsApp",
+    "loginRequired": "Inscrivez-vous pour voir les coordonnées de contact",
+    "transactions": "transaction(s) complétée(s)",
+    "rating": "Note",
+    "notes": "Notes du vendeur",
+    "buyEquivalent": "Équivalent en {currency}",
+    "back": "Retour aux offres"
+  },
+  "auth": {
+    "login": {
+      "title": "Connexion",
+      "subtitle": "Accédez à votre compte SimplexPay",
+      "email": "Adresse email",
+      "password": "Mot de passe",
+      "submit": "Se connecter",
+      "noAccount": "Pas encore de compte ?",
+      "register": "S'inscrire"
+    },
+    "register": {
+      "title": "Inscription",
+      "subtitle": "Rejoignez SimplexPay gratuitement",
+      "firstName": "Prénom",
+      "lastName": "Nom",
+      "email": "Adresse email",
+      "password": "Mot de passe",
+      "phone": "Numéro de téléphone",
+      "country": "Pays",
+      "whatsapp": "WhatsApp (optionnel)",
+      "submit": "Créer mon compte",
+      "hasAccount": "Déjà inscrit ?",
+      "login": "Se connecter",
+      "passwordHint": "8 caractères minimum, une majuscule et un chiffre"
+    }
+  },
+  "createOffer": {
+    "title": "Publier une offre",
+    "category": "Catégorie",
+    "categoryDevises": "Devises",
+    "categoryKilos": "Kilos Voyage",
+    "categoryBateau": "Fret Bateau",
+    "type": "Type d'offre",
+    "typeSell": "Je vends",
+    "typeBuy": "J'achète",
+    "sellCurrency": "Devise que je vends",
+    "buyCurrency": "Devise que j'achète",
+    "sellCountry": "Pays de la devise vendue",
+    "buyCountry": "Pays de la devise achetée",
+    "amount": "Montant disponible",
+    "rate": "Taux de change",
+    "rateHelp": "Unités de devise vendue pour 1 unité de devise achetée",
+    "minAmount": "Montant minimum",
+    "maxAmount": "Montant maximum",
+    "notes": "Notes (optionnel)",
+    "expiryHours": "Durée de validité",
+    "paymentMethods": "Moyens de paiement",
+    "from": "Côté vendeur",
+    "to": "Côté acheteur",
+    "availableKg": "Kilos disponibles",
+    "pricePerKg": "Prix par kilo",
+    "travelDate": "Date de voyage",
+    "departureCity": "Ville de départ",
+    "destinationCity": "Ville de destination",
+    "departureCountry": "Pays de départ",
+    "destinationCountry": "Pays de destination",
+    "availableLbs": "Livres disponibles",
+    "pricePerLb": "Prix par livre",
+    "shipDepartureDate": "Date de départ du bateau",
+    "departurePort": "Port de départ",
+    "destinationPort": "Port de destination",
+    "selectCountry": "Sélectionner un pays",
+    "submit": "Publier l'offre",
+    "success": "Offre publiée avec succès !"
+  },
+  "account": {
+    "title": "Mon compte",
+    "myOffers": "Mes offres",
+    "noOffers": "Vous n'avez pas encore d'offre.",
+    "createFirst": "Publier ma première offre",
+    "cancel": "Annuler",
+    "cancelConfirm": "Voulez-vous annuler cette offre ?",
+    "status": {
+      "Open": "Active",
+      "Cancelled": "Annulée",
+      "Expired": "Expirée",
+      "Filled": "Complétée",
+      "PartiallyFilled": "Partielle"
+    }
+  },
+  "common": {
+    "loading": "Chargement...",
+    "error": "Une erreur est survenue",
+    "retry": "Réessayer",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "close": "Fermer",
+    "yes": "Oui",
+    "no": "Non"
+  }
+}
