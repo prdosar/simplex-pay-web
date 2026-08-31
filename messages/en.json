@@ -19,7 +19,17 @@
       "trust1": "Free sign up",
       "trust2": "Direct payment, no hidden fees",
       "trust3": "Verified profiles and reviews",
-      "cta": "Browse offers"
+      "cta": "Browse offers",
+      "cardSecure": "Secure exchange",
+      "cardRated": "Verified reviews"
+    },
+    "stats": {
+      "servicesValue": "3",
+      "servicesLabel": "exchange services",
+      "feesValue": "0",
+      "feesLabel": "hidden fees",
+      "p2pValue": "100%",
+      "p2pLabel": "peer to peer"
     },
     "tabs": {
       "devises": "Currencies",
@@ -32,8 +42,10 @@
     "offers": {
       "sectionTitle": "Offers right now",
       "sectionSubtitle": "A snapshot of exchanges from the community",
+      "eyebrow": "Live marketplace",
       "searchPlaceholder": "Search",
       "countryLabel": "Seller country",
+      "allCountries": "All countries",
       "sortLabel": "Sort by",
       "sortRecent": "Most recent",
       "sortRateDesc": "Best rate ↓",
@@ -77,12 +89,14 @@
     },
     "howItWorks": {
       "title": "How it works",
+      "eyebrow": "In 3 steps",
       "step1": { "num": "01", "title": "Browse offers", "desc": "View available offers from individuals — no account needed." },
       "step2": { "num": "02", "title": "Sign up", "desc": "Create your free account to unlock seller contact details." },
       "step3": { "num": "03", "title": "Deal directly", "desc": "Contact the person by phone or WhatsApp and arrange the details." }
     },
     "why": {
       "title": "Why SimplexPay",
+      "eyebrow": "Our promises",
       "p1": { "title": "Verified community", "desc": "Every profile is verified before being allowed to post an offer." },
       "p2": { "title": "No middleman", "desc": "You exchange directly with another individual at the rate you choose." },
       "p3": { "title": "Post-transaction reviews", "desc": "Rate your exchanges to build trust within the community." },
@@ -210,6 +224,7 @@
     "departurePort": "Departure port",
     "destinationPort": "Destination port",
     "selectCountry": "Select a country",
+    "selectCurrency": "Select a currency",
     "submit": "Post offer",
     "success": "Offer posted successfully!"
   },

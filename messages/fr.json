@@ -19,7 +19,17 @@
       "trust1": "Inscription gratuite",
       "trust2": "Paiement direct, sans frais cachés",
       "trust3": "Profils et avis vérifiés",
-      "cta": "Voir les offres"
+      "cta": "Voir les offres",
+      "cardSecure": "Échange sécurisé",
+      "cardRated": "Avis vérifiés"
+    },
+    "stats": {
+      "servicesValue": "3",
+      "servicesLabel": "services d'échange",
+      "feesValue": "0",
+      "feesLabel": "frais cachés",
+      "p2pValue": "100%",
+      "p2pLabel": "entre particuliers"
     },
     "tabs": {
       "devises": "Devises",
@@ -32,8 +42,10 @@
     "offers": {
       "sectionTitle": "Offres en ce moment",
       "sectionSubtitle": "Un aperçu des échanges proposés par la communauté",
+      "eyebrow": "Marché en direct",
       "searchPlaceholder": "Recherche",
       "countryLabel": "Pays vendeur",
+      "allCountries": "Tous les pays",
       "sortLabel": "Trier par",
       "sortRecent": "Plus récentes",
       "sortRateDesc": "Meilleur taux ↓",
@@ -77,12 +89,14 @@
     },
     "howItWorks": {
       "title": "Comment ça marche",
+      "eyebrow": "En 3 étapes",
       "step1": { "num": "01", "title": "Parcourez les offres", "desc": "Consultez les offres proposées par des particuliers, sans créer de compte." },
       "step2": { "num": "02", "title": "Inscrivez-vous", "desc": "Créez votre compte gratuitement pour débloquer les coordonnées des vendeurs." },
       "step3": { "num": "03", "title": "Concluez directement", "desc": "Contactez la personne par téléphone ou WhatsApp et convenez des modalités." }
     },
     "why": {
       "title": "Pourquoi SimplexPay",
+      "eyebrow": "Nos garanties",
       "p1": { "title": "Communauté vérifiée", "desc": "Chaque profil est vérifié avant de pouvoir publier une offre." },
       "p2": { "title": "Sans intermédiaire", "desc": "Vous échangez directement avec un autre particulier, au taux que vous choisissez." },
       "p3": { "title": "Avis après transaction", "desc": "Notez vos échanges pour renforcer la confiance de la communauté." },
@@ -210,6 +224,7 @@
     "departurePort": "Port de départ",
     "destinationPort": "Port de destination",
     "selectCountry": "Sélectionner un pays",
+    "selectCurrency": "Sélectionner une devise",
     "submit": "Publier l'offre",
     "success": "Offre publiée avec succès !"
   },

@@ -1,0 +1,180 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model SupportedCurrencies {
+  Code          String  @id
+  Name          String
+  NameFr        String
+  Symbol        String
+  Type          String
+  DecimalPlaces Int
+  IsActive      Boolean @default(true)
+
+  Countries Countries[]
+}
+
+model Countries {
+  Code         String  @id
+  Name         String
+  NameFr       String
+  Flag         String
+  IsActive     Boolean @default(true)
+  CurrencyCode String
+
+  Currency               SupportedCurrencies   @relation(fields: [CurrencyCode], references: [Code])
+  CountryPaymentMethods  CountryPaymentMethods[]
+  Users                  Users[]
+  OffersSold             Offers[]              @relation("OfferSellCountry")
+  OffersBought           Offers[]              @relation("OfferBuyCountry")
+  TravelKiloDepartures   TravelKiloOffers[]    @relation("TravelKiloDeparture")
+  TravelKiloDestinations TravelKiloOffers[]    @relation("TravelKiloDestination")
+  BoatShippingDepartures BoatShippingOffers[]  @relation("BoatShippingDeparture")
+  BoatShippingDestinations BoatShippingOffers[] @relation("BoatShippingDestination")
+}
+
+model PaymentMethods {
+  Id          String  @id @default(uuid()) @db.Uuid
+  Name        String
+  Description String?
+  Type        String
+  LogoUrl     String?
+  IsActive    Boolean @default(true)
+
+  CountryPaymentMethods CountryPaymentMethods[]
+  OfferPaymentMethods   OfferPaymentMethods[]
+}
+
+model CountryPaymentMethods {
+  CountryCode     String
+  PaymentMethodId String @db.Uuid
+  IsPopular       Boolean @default(false)
+
+  Country       Countries      @relation(fields: [CountryCode], references: [Code])
+  PaymentMethod PaymentMethods @relation(fields: [PaymentMethodId], references: [Id])
+
+  @@id([CountryCode, PaymentMethodId])
+}
+
+model Users {
+  Id               String   @id @default(uuid()) @db.Uuid
+  FirstName        String
+  LastName         String
+  Email            String   @unique
+  Phone            String?
+  WhatsApp         String?
+  PasswordHash     String
+  CountryCode      String?
+  Rating           Float    @default(0)
+  TransactionCount Int      @default(0)
+  Status           String   @default("Active")
+  CreatedAt        DateTime @default(now())
+
+  Country            Countries?           @relation(fields: [CountryCode], references: [Code])
+  Offers             Offers[]
+  TravelKiloOffers   TravelKiloOffers[]
+  BoatShippingOffers BoatShippingOffers[]
+  Sessions           Sessions[]
+}
+
+model Sessions {
+  Id        String   @id @default(uuid()) @db.Uuid
+  UserId    String   @db.Uuid
+  ExpiresAt DateTime
+  CreatedAt DateTime @default(now())
+
+  User Users @relation(fields: [UserId], references: [Id], onDelete: Cascade)
+
+  @@index([ExpiresAt])
+}
+
+model Offers {
+  Id              String   @id @default(uuid()) @db.Uuid
+  CreatorId       String   @db.Uuid
+  Type            String
+  SellCountryCode String
+  BuyCountryCode  String
+  Amount          Decimal  @db.Decimal(18, 2)
+  AmountFilled    Decimal  @default(0) @db.Decimal(18, 2)
+  Rate            Decimal  @db.Decimal(18, 6)
+  MinAmount       Decimal  @db.Decimal(18, 2)
+  MaxAmount       Decimal  @db.Decimal(18, 2)
+  Status          String   @default("Open")
+  Notes           String?
+  ExpiresAt       DateTime
+  CreatedAt       DateTime @default(now())
+
+  Creator     Users                  @relation(fields: [CreatorId], references: [Id])
+  SellCountry Countries             @relation("OfferSellCountry", fields: [SellCountryCode], references: [Code])
+  BuyCountry  Countries             @relation("OfferBuyCountry", fields: [BuyCountryCode], references: [Code])
+  PaymentMethods OfferPaymentMethods[]
+
+  @@index([Status, ExpiresAt, CreatedAt])
+  @@index([SellCountryCode])
+  @@index([CreatorId])
+}
+
+model OfferPaymentMethods {
+  OfferId         String @db.Uuid
+  PaymentMethodId String @db.Uuid
+  Side            String
+
+  Offer         Offers         @relation(fields: [OfferId], references: [Id], onDelete: Cascade)
+  PaymentMethod PaymentMethods @relation(fields: [PaymentMethodId], references: [Id])
+
+  @@id([OfferId, PaymentMethodId, Side])
+  @@index([PaymentMethodId])
+}
+
+model TravelKiloOffers {
+  Id                     String   @id @default(uuid()) @db.Uuid
+  CreatorId              String   @db.Uuid
+  AvailableKg            Decimal  @db.Decimal(10, 2)
+  PricePerKg             Decimal  @db.Decimal(10, 2)
+  TravelDate             DateTime
+  DepartureCity          String
+  DestinationCity        String
+  DepartureCountryCode   String
+  DestinationCountryCode String
+  Notes                  String?
+  Status                 String   @default("Open")
+  ExpiresAt              DateTime
+  CreatedAt              DateTime @default(now())
+
+  Creator            Users     @relation(fields: [CreatorId], references: [Id])
+  DepartureCountry   Countries @relation("TravelKiloDeparture", fields: [DepartureCountryCode], references: [Code])
+  DestinationCountry Countries @relation("TravelKiloDestination", fields: [DestinationCountryCode], references: [Code])
+
+  @@index([Status, ExpiresAt])
+  @@index([DepartureCountryCode, DestinationCountryCode])
+  @@index([CreatorId])
+}
+
+model BoatShippingOffers {
+  Id                     String   @id @default(uuid()) @db.Uuid
+  CreatorId              String   @db.Uuid
+  AvailableLbs           Decimal  @db.Decimal(12, 2)
+  PricePerLb             Decimal  @db.Decimal(10, 2)
+  ShipDepartureDate      DateTime
+  DeparturePort          String
+  DestinationPort        String
+  DepartureCountryCode   String
+  DestinationCountryCode String
+  Notes                  String?
+  Status                 String   @default("Open")
+  ExpiresAt              DateTime
+  CreatedAt              DateTime @default(now())
+
+  Creator            Users     @relation(fields: [CreatorId], references: [Id])
+  DepartureCountry   Countries @relation("BoatShippingDeparture", fields: [DepartureCountryCode], references: [Code])
+  DestinationCountry Countries @relation("BoatShippingDestination", fields: [DestinationCountryCode], references: [Code])
+
+  @@index([Status, ExpiresAt])
+  @@index([DepartureCountryCode, DestinationCountryCode])
+  @@index([CreatorId])
+}

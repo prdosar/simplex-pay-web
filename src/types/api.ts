@@ -128,13 +128,6 @@ export interface PagedResult<T> {
   totalPages: number
 }
 
-export interface AuthResponse {
-  accessToken: string
-  refreshToken: string
-  expiresAt: string
-  user: UserDto
-}
-
 export interface UserDto {
   id: string
   firstName: string
