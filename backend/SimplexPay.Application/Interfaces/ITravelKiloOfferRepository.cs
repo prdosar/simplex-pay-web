@@ -1,0 +1,17 @@
+using SimplexPay.Domain.Entities;
+
+namespace SimplexPay.Application.Interfaces;
+
+public interface ITravelKiloOfferRepository
+{
+    Task<TravelKiloOffer?> GetByIdWithDetailsAsync(Guid id, CancellationToken ct = default);
+    Task<(IList<TravelKiloOffer> Items, int Total)> GetPagedAsync(
+        string? departureCountryCode,
+        string? destinationCountryCode,
+        string? search,
+        int page,
+        int pageSize,
+        CancellationToken ct = default);
+    Task AddAsync(TravelKiloOffer offer, CancellationToken ct = default);
+    Task SaveChangesAsync(CancellationToken ct = default);
+}

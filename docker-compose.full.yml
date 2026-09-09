@@ -1,0 +1,69 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: simplexpay-postgres
+    environment:
+      POSTGRES_DB: simplexpay
+      POSTGRES_USER: simplexpay
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U simplexpay"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: SimplexPay.API/Dockerfile
+    container_name: simplexpay-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=simplexpay;Username=simplexpay;Password=${POSTGRES_PASSWORD}
+      - Jwt__Key=${JWT_SECRET_KEY}
+      - Jwt__Issuer=simplexpay-api
+      - Jwt__Audience=simplexpay-clients
+      - Jwt__ExpiryMinutes=60
+      - Cors__Origins__0=${WEB_URL:-http://localhost:3000}
+      - Cors__Origins__1=${ADMIN_URL:-http://localhost:3001}
+    ports:
+      - "5000:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+      args:
+        # URL de l'API telle que le NAVIGATEUR la voit (IP/domaine public du serveur).
+        # Définir API_PUBLIC_URL dans .env pour la production.
+        # Exemple : API_PUBLIC_URL=https://api.simplexpay.com
+        NEXT_PUBLIC_API_URL: ${API_PUBLIC_URL:-http://localhost:5000}
+    container_name: simplexpay-web
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${API_PUBLIC_URL:-http://localhost:5000}
+    container_name: simplexpay-admin
+    ports:
+      - "3001:3000"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

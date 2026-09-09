@@ -1,0 +1,93 @@
+using SimplexPay.Domain.Entities;
+
+namespace SimplexPay.Application.Features.Offers.Dtos;
+
+public record OfferDto(
+    Guid Id,
+    string Type,                    // "Sell" | "Buy"
+    string SellCurrency,
+    string SellCurrencySymbol,
+    string BuyCurrency,
+    string BuyCurrencySymbol,
+    string SellCountry,
+    string SellCountryFlag,
+    string BuyCountry,
+    string BuyCountryFlag,
+    decimal Amount,
+    decimal AmountFilled,
+    decimal RemainingAmount,
+    decimal Rate,                   // unités de SellCurrency par 1 BuyCurrency
+    decimal BuyEquivalent,          // montant équivalent en BuyCurrency
+    decimal MinAmount,
+    decimal MaxAmount,
+    string Status,
+    DateTime ExpiresAt,
+    DateTime CreatedAt,
+    OfferCreatorDto Creator,
+    IList<OfferPaymentMethodDto> PaymentMethods,
+    string? Notes
+)
+{
+    public static OfferDto From(Offer offer, bool isAuthenticated)
+    {
+        return new OfferDto(
+            offer.Id,
+            offer.Type.ToString(),
+            offer.SellCurrencyCode,
+            offer.SellCurrency?.Symbol ?? offer.SellCurrencyCode,
+            offer.BuyCurrencyCode,
+            offer.BuyCurrency?.Symbol ?? offer.BuyCurrencyCode,
+            offer.SellCountryCode,
+            offer.SellCountry?.Flag ?? "",
+            offer.BuyCountryCode,
+            offer.BuyCountry?.Flag ?? "",
+            offer.Amount,
+            offer.AmountFilled,
+            offer.RemainingAmount,
+            offer.Rate,
+            offer.BuyEquivalent,
+            offer.MinAmount,
+            offer.MaxAmount,
+            offer.Status.ToString(),
+            offer.ExpiresAt,
+            offer.CreatedAt,
+            OfferCreatorDto.From(offer.User, isAuthenticated),
+            offer.PaymentMethods
+                .Select(pm => new OfferPaymentMethodDto(
+                    pm.PaymentMethod?.Name ?? pm.PaymentMethodId.ToString(),
+                    pm.PaymentMethod?.Type.ToString() ?? "",
+                    pm.Side.ToString()))
+                .ToList(),
+            offer.Notes
+        );
+    }
+}
+
+public record OfferCreatorDto(
+    Guid Id,
+    string FirstName,
+    string? LastName,               // null pour anonyme
+    decimal Rating,
+    int TransactionCount,
+    string? Phone,                  // null pour anonyme
+    string? WhatsApp                // null pour anonyme
+)
+{
+    public static OfferCreatorDto From(User user, bool isAuthenticated) => new(
+        user.Id,
+        user.FirstName,
+        isAuthenticated ? user.LastName : null,
+        user.Rating,
+        user.TransactionCount,
+        isAuthenticated ? user.PhoneNumber : MaskPhone(user.PhoneNumber),
+        isAuthenticated ? user.WhatsAppNumber : null
+    );
+
+    private static string MaskPhone(string phone)
+    {
+        if (string.IsNullOrWhiteSpace(phone) || phone.Length < 4) return "••••••••••";
+        return new string('•', phone.Length - 4) + phone[^4..];
+    }
+}
+
+public record OfferPaymentMethodDto(string Name, string Type, string Side);

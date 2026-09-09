@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+  body { margin: 0; font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: #0d9488; text-decoration: none; }
+  a:hover { color: #0f766e; }
+  * { box-sizing: border-box; }
+</style>
+</helmet>
+
+<div style="background:#ffffff;color:#0f172a;min-height:100vh;">
+
+  <!-- NAV -->
+  <nav style="position:sticky;top:0;z-index:50;background:#ffffff;border-bottom:1px solid #e2e8f0;">
+    <div style="max-width:1200px;margin:0 auto;padding:0 24px;height:72px;display:flex;align-items:center;justify-content:space-between;">
+      <div style="display:flex;align-items:center;gap:2px;font-size:22px;font-weight:800;">
+        <span style="color:#0d9488;">Simplex</span><span style="color:#0f172a;">Pay</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:32px;">
+        <a href="#offres" style="font-size:14px;font-weight:600;color:#334155;">Offres</a>
+        <a href="#comment-ca-marche" style="font-size:14px;font-weight:600;color:#334155;">Comment ça marche</a>
+      </div>
+      <div style="display:flex;align-items:center;gap:16px;">
+        <a href="#" style="font-size:12px;font-weight:600;color:#64748b;border:1px solid #e2e8f0;border-radius:6px;padding:5px 9px;letter-spacing:0.04em;">EN</a>
+        <a href="#" style="font-size:14px;font-weight:600;color:#0f172a;">Connexion</a>
+        <a href="#" style="font-size:14px;font-weight:700;color:#ffffff;background:#0d9488;padding:9px 18px;border-radius:10px;">Inscription</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section style="max-width:1200px;margin:0 auto;padding:{{ heroPadding }};display:flex;{{ heroFlexStyle }}">
+    <div style="flex:1;min-width:320px;">
+      <p style="display:inline-block;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#0f766e;background:#ccfbf1;padding:6px 12px;border-radius:100px;margin:0 0 20px;">Plateforme P2P · Diaspora africaine au Canada</p>
+      <h1 style="font-size:52px;line-height:1.08;font-weight:800;margin:0 0 20px;letter-spacing:-0.02em;text-wrap:balance;">Échangez vos devises entre particuliers, en toute confiance</h1>
+      <p style="font-size:18px;line-height:1.6;color:#475569;margin:0 0 32px;max-width:520px;text-wrap:pretty;">La plateforme pensée pour la diaspora africaine au Canada. Trouvez un particulier de confiance pour échanger vos CAD contre XOF, XAF, NGN ou GHS — sans passer par une banque.</p>
+      <div style="display:flex;gap:14px;margin-bottom:36px;flex-wrap:wrap;">
+        <a href="#offres" style="font-size:15px;font-weight:700;color:#ffffff;background:#0d9488;padding:14px 28px;border-radius:12px;">Voir les offres</a>
+        <a href="#" style="font-size:15px;font-weight:700;color:#0f172a;background:#ffffff;border:1.5px solid #e2e8f0;padding:14px 28px;border-radius:12px;">Publier une offre</a>
+      </div>
+      <div style="display:flex;gap:28px;flex-wrap:wrap;">
+        <sc-for list="{{ trustPoints }}" as="pt" hint-placeholder-count="3">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="width:18px;height:18px;border-radius:50%;background:#ccfbf1;color:#0f766e;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✓</span>
+            <span style="font-size:14px;color:#334155;font-weight:500;">{{ pt }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="flex:1;min-width:320px;display:flex;justify-content:center;align-items:center;">
+      <div style="width:100%;max-width:380px;background:#ffffff;border:1px solid #e2e8f0;border-radius:20px;box-shadow:0 20px 50px -12px rgba(15,23,42,0.15);overflow:hidden;">
+        <div style="height:6px;background:linear-gradient(90deg,#0d9488,#f97316);"></div>
+        <div style="padding:24px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+            <div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:16px;">
+              <img src="https://flagcdn.com/24x18/ca.png" alt="CA" style="width:22px;height:16px;border-radius:2px;object-fit:cover;"/><span>CAD</span><span style="color:#94a3b8;">→</span><img src="https://flagcdn.com/24x18/tg.png" alt="TG" style="width:22px;height:16px;border-radius:2px;object-fit:cover;"/><span>XOF</span>
+            </div>
+            <span style="font-size:11px;font-weight:600;color:#0d9488;background:#ccfbf1;padding:3px 9px;border-radius:100px;">Active</span>
+          </div>
+          <p style="font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:#64748b;margin:0 0 4px;">Taux proposé</p>
+          <p style="font-size:32px;font-weight:800;color:#0d9488;margin:0 0 20px;">615,40 <span style="font-size:14px;font-weight:500;color:#64748b;">XOF / CAD</span></p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;font-size:13px;">
+            <div><p style="color:#64748b;margin:0 0 2px;">Disponible</p><p style="font-weight:700;margin:0;">500 000 XOF</p></div>
+            <div><p style="color:#64748b;margin:0 0 2px;">Min / Max</p><p style="font-weight:700;margin:0;">50k – 500k</p></div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding-top:16px;border-top:1px solid #f1f5f9;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="width:28px;height:28px;border-radius:50%;background:#0d9488;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;">K</div>
+              <span style="font-size:13px;font-weight:600;">Kossi</span>
+              <span style="font-size:12px;color:#64748b;">★ 4.8</span>
+            </div>
+            <span style="font-size:12px;font-weight:700;color:#0d9488;">Contacter</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CURRENCY STRIP -->
+  <section style="background:#f8fafc;border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;padding:28px 24px;">
+    <div style="max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:24px;flex-wrap:wrap;justify-content:center;">
+      <span style="font-size:13px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.06em;">Devises disponibles</span>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <sc-for list="{{ currencyPairs }}" as="pair" hint-placeholder-count="5">
+          <div style="display:flex;align-items:center;gap:6px;background:#ffffff;border:1px solid #e2e8f0;border-radius:100px;padding:8px 16px;font-size:14px;font-weight:600;">
+            <img src="https://flagcdn.com/24x18/ca.png" alt="CA" style="width:20px;height:14px;border-radius:2px;object-fit:cover;"/><span>CAD</span><span style="color:#94a3b8;">↔</span><img src="{{ pair.flagUrl }}" alt="{{ pair.code }}" style="width:20px;height:14px;border-radius:2px;object-fit:cover;"/><span>{{ pair.code }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <!-- OFFERS -->
+  <section id="offres" style="background:#f8fafc;padding:88px 24px;border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;">
+    <div style="max-width:1200px;margin:0 auto;">
+      <div style="margin-bottom:32px;">
+        <h2 style="font-size:34px;font-weight:800;margin:0 0 8px;letter-spacing:-0.01em;">Offres en ce moment</h2>
+        <p style="font-size:15px;color:#64748b;margin:0;">Un aperçu des échanges proposés par la communauté</p>
+      </div>
+
+      <!-- Search bar -->
+      <div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:240px;position:relative;display:flex;align-items:center;">
+          <span style="position:absolute;left:14px;color:#94a3b8;font-size:14px;">🔍</span>
+          <input type="text" value="{{ search }}" onChange="{{ onSearchChange }}" placeholder="Rechercher un vendeur…" style="width:100%;padding:12px 130px 12px 38px;border:1px solid #e2e8f0;border-radius:10px;font-size:14px;font-family:inherit;background:#ffffff;"/>
+          <span style="position:absolute;right:8px;display:flex;align-items:center;gap:5px;background:#ccfbf1;color:#0f766e;font-size:12px;font-weight:700;padding:5px 10px;border-radius:8px;">
+            <img src="{{ selectedCountryFlagUrl }}" alt="flag" style="width:18px;height:13px;border-radius:2px;object-fit:cover;"/><span>{{ selectedCountryLabel }}</span>
+          </span>
+        </div>
+        <span style="align-self:center;font-size:14px;color:#64748b;white-space:nowrap;">{{ resultCount }} offre(s)</span>
+      </div>
+
+      <div style="display:flex;gap:24px;align-items:flex-start;">
+        <!-- Filter sidebar -->
+        <div style="width:260px;flex-shrink:0;background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:20px;">
+          <div style="margin-bottom:20px;">
+            <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#64748b;margin-bottom:8px;">Pays vendeur</label>
+            <select value="{{ country }}" onChange="{{ onCountryChange }}" style="width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit;background:#ffffff;">
+              <sc-for list="{{ countries }}" as="c" hint-placeholder-count="5">
+                <option value="{{ c.code }}">{{ c.flag }} {{ c.name }} — {{ c.currency }}</option>
+              </sc-for>
+            </select>
+          </div>
+
+          <div style="margin-bottom:20px;">
+            <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#64748b;margin-bottom:8px;">Trier par</label>
+            <select value="{{ sort }}" onChange="{{ onSortChange }}" style="width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit;background:#ffffff;">
+              <option value="recent">Plus récentes</option>
+              <option value="rate_desc">Meilleur taux ↓</option>
+              <option value="rate_asc">Taux croissant ↑</option>
+            </select>
+          </div>
+
+          <div style="margin-bottom:20px;">
+            <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#64748b;margin-bottom:8px;">Moyen de paiement</label>
+            <sc-if value="{{ hasCountry }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:4px;">
+                <button onClick="{{ onClearMethod }}" style="text-align:left;padding:8px 10px;border-radius:8px;border:none;background:{{ allMethodsBg }};color:{{ allMethodsColor }};font-weight:{{ allMethodsWeight }};font-size:13px;cursor:pointer;font-family:inherit;">Tous les modes</button>
+                <sc-for list="{{ selectedCountryMethods }}" as="m" hint-placeholder-count="2">
+                  <button onClick="{{ m.onClick }}" style="text-align:left;padding:8px 10px;border-radius:8px;border:none;background:{{ m.bg }};color:{{ m.color }};font-weight:{{ m.weight }};font-size:13px;cursor:pointer;font-family:inherit;">{{ m.name }}</button>
+                </sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ noCountry }}" hint-placeholder-val="{{ true }}">
+              <p style="font-size:13px;color:#94a3b8;font-style:italic;margin:0;">Sélectionnez un pays</p>
+            </sc-if>
+          </div>
+
+          <div style="margin-bottom:20px;">
+            <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#64748b;margin-bottom:8px;">Montant disponible</label>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <input type="number" min="0" value="{{ minAmount }}" onChange="{{ onMinChange }}" placeholder="Min" style="width:0;flex:1;padding:9px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;min-width:0;"/>
+              <span style="color:#94a3b8;font-size:12px;">—</span>
+              <input type="number" min="0" value="{{ maxAmount }}" onChange="{{ onMaxChange }}" placeholder="Max" style="width:0;flex:1;padding:9px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;min-width:0;"/>
+            </div>
+          </div>
+
+          <sc-if value="{{ hasActiveFilters }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ onResetFilters }}" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;background:none;color:#64748b;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">Effacer les filtres ({{ activeCount }})</button>
+          </sc-if>
+        </div>
+
+        <!-- Results -->
+        <div style="flex:1;min-width:0;">
+          <sc-if value="{{ hasResults }}" hint-placeholder-val="{{ true }}">
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;">
+              <sc-for list="{{ visibleOffers }}" as="offer" hint-placeholder-count="3">
+                <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:22px;">
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+                    <div style="display:flex;align-items:center;gap:6px;font-weight:700;font-size:15px;">
+                      <img src="{{ offer.fromFlagUrl }}" alt="{{ offer.from }}" style="width:22px;height:16px;border-radius:2px;object-fit:cover;"/><span>{{ offer.from }}</span><span style="color:#94a3b8;">→</span><img src="{{ offer.toFlagUrl }}" alt="{{ offer.to }}" style="width:22px;height:16px;border-radius:2px;object-fit:cover;"/><span>{{ offer.to }}</span>
+                    </div>
+                    <span style="font-size:11px;font-weight:600;color:#0d9488;background:#ccfbf1;padding:3px 9px;border-radius:100px;">Active</span>
+                  </div>
+                  <p style="font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:#64748b;margin:0 0 4px;">Taux</p>
+                  <p style="font-size:26px;font-weight:800;color:#0d9488;margin:0 0 16px;">{{ offer.rate }} <span style="font-size:13px;font-weight:500;color:#64748b;">{{ offer.to }} / {{ offer.from }}</span></p>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;font-size:13px;">
+                    <div><p style="color:#64748b;margin:0 0 2px;">Disponible</p><p style="font-weight:700;margin:0;">{{ offer.available }}</p></div>
+                    <div><p style="color:#64748b;margin:0 0 2px;">Min / Max</p><p style="font-weight:700;margin:0;">{{ offer.minMax }}</p></div>
+                  </div>
+                  <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;">
+                    <sc-for list="{{ offer.paymentMethods }}" as="pm" hint-placeholder-count="2">
+                      <span style="font-size:11px;background:#f1f5f9;color:#64748b;padding:3px 9px;border-radius:100px;">{{ pm }}</span>
+                    </sc-for>
+                  </div>
+                  <div style="display:flex;align-items:center;justify-content:space-between;padding-top:14px;border-top:1px solid #f1f5f9;">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                      <div style="width:26px;height:26px;border-radius:50%;background:#0d9488;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;">{{ offer.initial }}</div>
+                      <span style="font-size:13px;font-weight:600;">{{ offer.seller }}</span>
+                      <span style="font-size:12px;color:#64748b;">★ {{ offer.rating }}</span>
+                    </div>
+                    <span style="font-size:12px;color:#64748b;">🔒</span>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{ noResults }}" hint-placeholder-val="{{ false }}">
+            <div style="text-align:center;padding:64px 24px;color:#64748b;">
+              <p style="font-size:16px;margin:0 0 12px;">Aucune offre ne correspond à ces critères.</p>
+              <button onClick="{{ onResetFilters }}" style="border:none;background:none;color:#0d9488;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;">Effacer les filtres</button>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <sc-if value="{{ showHowItWorks }}" hint-placeholder-val="{{ true }}">
+    <section id="comment-ca-marche" style="max-width:1200px;margin:0 auto;padding:88px 24px;">
+      <h2 style="font-size:34px;font-weight:800;text-align:center;margin:0 0 56px;letter-spacing:-0.01em;">Comment ça marche</h2>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:32px;">
+        <sc-for list="{{ steps }}" as="step" hint-placeholder-count="3">
+          <div style="padding:32px 24px;border:1px solid #e2e8f0;border-radius:16px;">
+            <div style="width:40px;height:40px;border-radius:10px;border:1.5px solid #0d9488;color:#0d9488;font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center;margin-bottom:20px;">{{ step.num }}</div>
+            <h3 style="font-size:19px;font-weight:700;margin:0 0 8px;">{{ step.title }}</h3>
+            <p style="font-size:15px;color:#64748b;line-height:1.55;margin:0;">{{ step.desc }}</p>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+  </sc-if>
+
+  <!-- TRUST PILLARS -->
+  <sc-if value="{{ showTrustPillars }}" hint-placeholder-val="{{ true }}">
+    <section style="max-width:1200px;margin:0 auto;padding:88px 24px;">
+      <h2 style="font-size:34px;font-weight:800;text-align:center;margin:0 0 56px;letter-spacing:-0.01em;">Pourquoi SimplexPay</h2>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:24px;">
+        <sc-for list="{{ pillars }}" as="pillar" hint-placeholder-count="4">
+          <div>
+            <div style="width:36px;height:36px;border-radius:8px;background:#ccfbf1;margin-bottom:16px;"></div>
+            <h3 style="font-size:16px;font-weight:700;margin:0 0 8px;">{{ pillar.title }}</h3>
+            <p style="font-size:14px;color:#64748b;line-height:1.55;margin:0;">{{ pillar.desc }}</p>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+  </sc-if>
+
+  <!-- CTA BANNER -->
+  <section style="background:#0f766e;padding:72px 24px;text-align:center;">
+    <div style="max-width:600px;margin:0 auto;">
+      <h2 style="font-size:32px;font-weight:800;color:#ffffff;margin:0 0 12px;letter-spacing:-0.01em;">Prêt à échanger ?</h2>
+      <p style="font-size:16px;color:#ccfbf1;margin:0 0 32px;">Rejoignez la communauté SimplexPay, c'est gratuit.</p>
+      <a href="#" style="display:inline-block;font-size:15px;font-weight:700;color:#0f766e;background:#ffffff;padding:14px 32px;border-radius:12px;">Créer mon compte</a>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer style="background:#0f172a;color:#cbd5e1;padding:64px 24px 32px;">
+    <div style="max-width:1200px;margin:0 auto;">
+      <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:32px;margin-bottom:48px;">
+        <div>
+          <div style="display:flex;align-items:center;gap:2px;font-size:20px;font-weight:800;margin-bottom:12px;">
+            <span style="color:#2dd4bf;">Simplex</span><span style="color:#ffffff;">Pay</span>
+          </div>
+          <p style="font-size:14px;color:#64748b;line-height:1.6;max-width:280px;margin:0;">La plateforme d'échange de devises entre particuliers pour la diaspora africaine au Canada.</p>
+        </div>
+        <div>
+          <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#64748b;margin:0 0 16px;">Produit</p>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <a href="#offres" style="font-size:14px;color:#cbd5e1;">Voir les offres</a>
+            <a href="#" style="font-size:14px;color:#cbd5e1;">Publier une offre</a>
+            <a href="#comment-ca-marche" style="font-size:14px;color:#cbd5e1;">Comment ça marche</a>
+          </div>
+        </div>
+        <div>
+          <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#64748b;margin:0 0 16px;">Compte</p>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <a href="#" style="font-size:14px;color:#cbd5e1;">Connexion</a>
+            <a href="#" style="font-size:14px;color:#cbd5e1;">Inscription</a>
+            <a href="#" style="font-size:14px;color:#cbd5e1;">Mon compte</a>
+          </div>
+        </div>
+        <div>
+          <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#64748b;margin:0 0 16px;">Légal</p>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <a href="#" style="font-size:14px;color:#cbd5e1;">Mentions légales</a>
+            <a href="#" style="font-size:14px;color:#cbd5e1;">Confidentialité</a>
+            <a href="#" style="font-size:14px;color:#cbd5e1;">Conditions d'utilisation</a>
+          </div>
+        </div>
+      </div>
+      <div style="border-top:1px solid #1e293b;padding-top:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+        <p style="font-size:13px;color:#64748b;margin:0;">© 2026 SimplexPay. Fait pour la diaspora africaine au Canada.</p>
+        <a href="#" style="font-size:12px;font-weight:600;color:#64748b;border:1px solid #1e293b;border-radius:6px;padding:5px 9px;letter-spacing:0.04em;">EN</a>
+      </div>
+    </div>
+  </footer>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440},&quot;heroLayout&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;split&quot;,&quot;options&quot;:[&quot;split&quot;,&quot;centered&quot;],&quot;tsType&quot;:&quot;string&quot;},&quot;showHowItWorks&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;showTrustPillars&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;offersToShow&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:3,&quot;options&quot;:[2,3,4],&quot;tsType&quot;:&quot;number&quot;}}">
+class Component extends DCLogic {
+  state = { search: '', country: 'TG', paymentMethod: '', minAmount: '', maxAmount: '', sort: 'recent' };
+
+  renderVals() {
+    const heroLayout = this.props.heroLayout ?? 'split';
+    const offersToShow = this.props.offersToShow ?? 3;
+    const s = this.state;
+
+    const flagUrl = (code) => `https://flagcdn.com/24x18/${code.toLowerCase()}.png`;
+
+    const countries = [
+      { code: 'SN', flag: '🇸🇳', flagUrl: flagUrl('sn'), name: 'Sénégal', currency: 'XOF', methods: ['Orange Money', 'Wave', 'Virement bancaire'] },
+      { code: 'CM', flag: '🇨🇲', flagUrl: flagUrl('cm'), name: 'Cameroun', currency: 'XAF', methods: ['MTN Mobile Money', 'Orange Money'] },
+      { code: 'NG', flag: '🇳🇬', flagUrl: flagUrl('ng'), name: 'Nigeria', currency: 'NGN', methods: ['Virement bancaire', 'Opay'] },
+      { code: 'GH', flag: '🇬🇭', flagUrl: flagUrl('gh'), name: 'Ghana', currency: 'GHS', methods: ['MTN MoMo', 'Vodafone Cash'] },
+      { code: 'TG', flag: '🇹🇬', flagUrl: flagUrl('tg'), name: 'Togo', currency: 'XOF', methods: ['Flooz', 'T-Money', 'Virement bancaire'] },
+    ];
+
+    const offers = [
+      { fromFlag: '🇨🇦', fromFlagUrl: flagUrl('ca'), from: 'CAD', toFlag: '🇸🇳', toFlagUrl: flagUrl('sn'), to: 'XOF', rate: '615,40', rateNum: 615.40, available: '500 000 XOF', availableNum: 500000, minMax: '50k – 500k', initial: 'A', seller: 'Aminata', rating: '4.8', countryCode: 'SN', paymentMethods: ['Orange Money', 'Wave'] },
+      { fromFlag: '🇨🇦', fromFlagUrl: flagUrl('ca'), from: 'CAD', toFlag: '🇨🇲', toFlagUrl: flagUrl('cm'), to: 'XAF', rate: '610,00', rateNum: 610.00, available: '800 000 XAF', availableNum: 800000, minMax: '100k – 800k', initial: 'J', seller: 'Jean-Baptiste', rating: '4.6', countryCode: 'CM', paymentMethods: ['MTN Mobile Money'] },
+      { fromFlag: '🇨🇦', fromFlagUrl: flagUrl('ca'), from: 'CAD', toFlag: '🇳🇬', toFlagUrl: flagUrl('ng'), to: 'NGN', rate: '980,00', rateNum: 980.00, available: '300 000 NGN', availableNum: 300000, minMax: '50k – 300k', initial: 'C', seller: 'Chidi', rating: '5.0', countryCode: 'NG', paymentMethods: ['Virement bancaire', 'Opay'] },
+      { fromFlag: '🇨🇦', fromFlagUrl: flagUrl('ca'), from: 'CAD', toFlag: '🇬🇭', toFlagUrl: flagUrl('gh'), to: 'GHS', rate: '9,80', rateNum: 9.80, available: '15 000 GHS', availableNum: 15000, minMax: '1k – 15k', initial: 'K', seller: 'Kwame', rating: '4.9', countryCode: 'GH', paymentMethods: ['MTN MoMo'] },
+      { fromFlag: '🇨🇦', fromFlagUrl: flagUrl('ca'), from: 'CAD', toFlag: '🇹🇬', toFlagUrl: flagUrl('tg'), to: 'XOF', rate: '614,80', rateNum: 614.80, available: '400 000 XOF', availableNum: 400000, minMax: '50k – 400k', initial: 'K', seller: 'Kossi', rating: '4.7', countryCode: 'TG', paymentMethods: ['Flooz', 'T-Money'] },
+    ];
+
+    let filtered = offers.filter(o =>
+      (!s.search || o.seller.toLowerCase().includes(s.search.toLowerCase())) &&
+      (!s.country || o.countryCode === s.country) &&
+      (!s.paymentMethod || o.paymentMethods.includes(s.paymentMethod)) &&
+      (!s.minAmount || o.availableNum >= Number(s.minAmount)) &&
+      (!s.maxAmount || o.availableNum <= Number(s.maxAmount))
+    );
+    if (s.sort === 'rate_desc') filtered = filtered.slice().sort((a, b) => b.rateNum - a.rateNum);
+    if (s.sort === 'rate_asc') filtered = filtered.slice().sort((a, b) => a.rateNum - b.rateNum);
+
+    const selectedCountry = countries.find(c => c.code === s.country);
+    const activeCount = [s.paymentMethod, (s.minAmount || s.maxAmount) ? 'x' : '', s.search]
+      .filter(Boolean).length + (s.sort !== 'recent' ? 1 : 0);
+
+    const selectedCountryMethods = (selectedCountry?.methods ?? []).map(name => ({
+      name,
+      onClick: () => this.setState({ paymentMethod: name }),
+      bg: s.paymentMethod === name ? '#ccfbf1' : 'transparent',
+      color: s.paymentMethod === name ? '#0f766e' : '#334155',
+      weight: s.paymentMethod === name ? 700 : 500,
+    }));
+
+    return {
+      search: s.search,
+      onSearchChange: (e) => this.setState({ search: e.target.value }),
+      sort: s.sort,
+      onSortChange: (e) => this.setState({ sort: e.target.value }),
+      country: s.country,
+      onCountryChange: (e) => this.setState({ country: e.target.value, paymentMethod: '' }),
+      countries,
+      selectedCountryFlagUrl: selectedCountry?.flagUrl ?? '',
+      selectedCountryLabel: selectedCountry ? `${selectedCountry.name} · ${selectedCountry.currency}` : '',
+      hasCountry: !!selectedCountry,
+      noCountry: !selectedCountry,
+      selectedCountryMethods,
+      onClearMethod: () => this.setState({ paymentMethod: '' }),
+      allMethodsBg: s.paymentMethod === '' ? '#ccfbf1' : 'transparent',
+      allMethodsColor: s.paymentMethod === '' ? '#0f766e' : '#334155',
+      allMethodsWeight: s.paymentMethod === '' ? 700 : 500,
+      minAmount: s.minAmount,
+      onMinChange: (e) => this.setState({ minAmount: e.target.value }),
+      maxAmount: s.maxAmount,
+      onMaxChange: (e) => this.setState({ maxAmount: e.target.value }),
+      hasActiveFilters: activeCount > 0,
+      activeCount,
+      onResetFilters: () => this.setState({ search: '', paymentMethod: '', minAmount: '', maxAmount: '', sort: 'recent' }),
+      resultCount: filtered.length,
+      hasResults: filtered.length > 0,
+      noResults: filtered.length === 0,
+      heroPadding: '80px 24px 100px',
+      heroFlexStyle: heroLayout === 'centered'
+        ? 'flex-direction:column;text-align:center;align-items:center;gap:48px;'
+        : 'flex-direction:row;align-items:center;gap:64px;',
+      trustPoints: ['Inscription gratuite', 'Paiement direct, sans frais cachés', 'Profils et avis vérifiés'],
+      currencyPairs: [
+        { flagUrl: flagUrl('sn'), code: 'XOF' },
+        { flagUrl: flagUrl('cm'), code: 'XAF' },
+        { flagUrl: flagUrl('ng'), code: 'NGN' },
+        { flagUrl: flagUrl('gh'), code: 'GHS' },
+        { flagUrl: flagUrl('tg'), code: 'XOF' },
+      ],
+      showHowItWorks: this.props.showHowItWorks ?? true,
+      steps: [
+        { num: '01', title: 'Parcourez les offres', desc: 'Consultez les taux proposés par des particuliers, sans créer de compte.' },
+        { num: '02', title: 'Inscrivez-vous', desc: "Créez votre compte gratuitement pour débloquer les coordonnées des vendeurs." },
+        { num: '03', title: 'Échangez directement', desc: 'Contactez le vendeur par téléphone ou WhatsApp et convenez du rendez-vous.' },
+      ],
+      offersToShow: offersToShow,
+      visibleOffers: filtered.slice(0, offersToShow),
+      showTrustPillars: this.props.showTrustPillars ?? true,
+      pillars: [
+        { title: 'Communauté vérifiée', desc: 'Chaque profil est vérifié avant de pouvoir publier une offre.' },
+        { title: 'Sans intermédiaire', desc: 'Vous échangez directement avec un autre particulier, au taux que vous choisissez.' },
+        { title: 'Avis après transaction', desc: 'Notez vos échanges pour renforcer la confiance de la communauté.' },
+        { title: 'Support disponible', desc: 'Une question ? Notre équipe répond rapidement par email ou WhatsApp.' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

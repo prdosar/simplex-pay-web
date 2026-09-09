@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/backend/">
+    <Project Path="backend/SimplexPay.API/SimplexPay.API.csproj" />
+    <Project Path="backend/SimplexPay.Application/SimplexPay.Application.csproj" />
+    <Project Path="backend/SimplexPay.Domain/SimplexPay.Domain.csproj" />
+    <Project Path="backend/SimplexPay.Infrastructure/SimplexPay.Infrastructure.csproj" />
+  </Folder>
+</Solution>

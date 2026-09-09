@@ -1,0 +1,143 @@
+'use client'
+
+import { useState } from 'react'
+import useSWR from 'swr'
+import { api } from '@/lib/api'
+import type { PagedResult, AdminUserDto } from '@/types/api'
+
+export default function UsersPage() {
+  const [page, setPage] = useState(1)
+  const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+
+  const { data, isLoading } = useSWR<PagedResult<AdminUserDto>>(
+    `/api/admin/users?pageNumber=${page}&pageSize=20${debouncedSearch ? `&search=${debouncedSearch}` : ''}`,
+    (url: string) => api.get<PagedResult<AdminUserDto>>(url)
+  )
+
+  function handleSearch(e: React.ChangeEvent<HTMLInputElement>) {
+    setSearch(e.target.value)
+    const val = e.target.value
+    setTimeout(() => setDebouncedSearch(val), 300)
+    setPage(1)
+  }
+
+  return (
+    <div className="p-8">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Utilisateurs</h1>
+          <p className="text-[--color-muted-foreground] text-sm mt-1">
+            {data?.total ?? '...'} utilisateurs enregistrés
+          </p>
+        </div>
+      </div>
+
+      {/* Search */}
+      <div className="bg-white rounded-xl border border-[--color-border] mb-4 px-4 py-3 flex items-center gap-3">
+        <span className="text-[--color-muted-foreground]">🔍</span>
+        <input
+          type="text"
+          placeholder="Rechercher par nom, email..."
+          value={search}
+          onChange={handleSearch}
+          className="flex-1 text-sm focus:outline-none bg-transparent"
+        />
+      </div>
+
+      {/* Table */}
+      <div className="bg-white rounded-xl border border-[--color-border] overflow-hidden">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-[--color-border] bg-[--color-muted]">
+              <th className="text-left px-6 py-3 font-medium text-[--color-muted-foreground]">Utilisateur</th>
+              <th className="text-left px-6 py-3 font-medium text-[--color-muted-foreground]">Pays</th>
+              <th className="text-left px-6 py-3 font-medium text-[--color-muted-foreground]">Statut</th>
+              <th className="text-right px-6 py-3 font-medium text-[--color-muted-foreground]">Transactions</th>
+              <th className="text-right px-6 py-3 font-medium text-[--color-muted-foreground]">Note</th>
+              <th className="text-right px-6 py-3 font-medium text-[--color-muted-foreground]">Inscrit le</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[--color-border]">
+            {isLoading ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <tr key={i} className="animate-pulse">
+                  <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-40" /></td>
+                  <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-12" /></td>
+                  <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-16" /></td>
+                  <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-8 ml-auto" /></td>
+                  <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-10 ml-auto" /></td>
+                  <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-24 ml-auto" /></td>
+                </tr>
+              ))
+            ) : data?.items.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="px-6 py-12 text-center text-[--color-muted-foreground]">
+                  Aucun utilisateur trouvé
+                </td>
+              </tr>
+            ) : (
+              data?.items.map(user => (
+                <tr key={user.id} className="hover:bg-[--color-muted] transition-colors">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-[--color-primary] text-white text-xs flex items-center justify-center font-bold shrink-0">
+                        {user.firstName[0]}
+                      </div>
+                      <div>
+                        <p className="font-medium text-slate-900">{user.firstName} {user.lastName}</p>
+                        <p className="text-xs text-[--color-muted-foreground]">{user.email}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-[--color-muted-foreground]">{user.country}</td>
+                  <td className="px-6 py-4">
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                      user.status === 'Active' ? 'bg-green-100 text-green-700' :
+                      user.status === 'Suspended' ? 'bg-red-100 text-red-700' :
+                      'bg-gray-100 text-gray-600'
+                    }`}>
+                      {user.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-right text-slate-900">{user.transactionCount}</td>
+                  <td className="px-6 py-4 text-right">
+                    {user.rating > 0 ? `⭐ ${user.rating.toFixed(1)}` : '—'}
+                  </td>
+                  <td className="px-6 py-4 text-right text-[--color-muted-foreground]">
+                    {new Date(user.createdAt).toLocaleDateString('fr-CA')}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+
+        {/* Pagination */}
+        {data && data.totalPages > 1 && (
+          <div className="px-6 py-4 border-t border-[--color-border] flex items-center justify-between">
+            <p className="text-sm text-[--color-muted-foreground]">
+              Page {data.page} / {data.totalPages} — {data.total} utilisateurs
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="px-3 py-1.5 text-sm border border-[--color-border] rounded-lg disabled:opacity-40 hover:bg-[--color-muted] transition-colors"
+              >
+                ← Précédent
+              </button>
+              <button
+                onClick={() => setPage(p => Math.min(data.totalPages, p + 1))}
+                disabled={page === data.totalPages}
+                className="px-3 py-1.5 text-sm border border-[--color-border] rounded-lg disabled:opacity-40 hover:bg-[--color-muted] transition-colors"
+              >
+                Suivant →
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}

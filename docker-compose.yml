@@ -1,0 +1,65 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: simplexpay-postgres
+    environment:
+      POSTGRES_DB: simplexpay
+      POSTGRES_USER: simplexpay
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U simplexpay"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: SimplexPay.API/Dockerfile
+    container_name: simplexpay-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=simplexpay;Username=simplexpay;Password=${POSTGRES_PASSWORD:-changeme}
+      - Jwt__Key=${JWT_SECRET_KEY}
+      - Jwt__Issuer=simplexpay-api
+      - Jwt__Audience=simplexpay-clients
+      - Cors__Origins__0=http://localhost:3000
+      - Cors__Origins__1=http://localhost:3001
+    ports:
+      - "5080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+      args:
+        # Variable bake-time : valeur encodée dans le bundle JS au moment du build.
+        # Doit être l'URL que le NAVIGATEUR peut atteindre (pas le réseau Docker interne).
+        NEXT_PUBLIC_API_URL: http://localhost:5080
+    container_name: simplexpay-web
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:5080
+    container_name: simplexpay-admin
+    ports:
+      - "3001:3000"
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:
