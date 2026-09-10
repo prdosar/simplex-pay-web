@@ -31,11 +31,12 @@ public class Offer : BaseEntity
     public decimal AmountFilled { get; private set; } = 0;
 
     // Taux : combien d'unités de devise-produit pour 1 unité de devise d'achat
-    // Ex: 490 XOF pour 1 CAD
-    public decimal Rate { get; private set; }
+    // Ex: 490 XOF pour 1 CAD. Null si RateMode != Fixed (taux Google/XE résolu à l'affichage).
+    public decimal? Rate { get; private set; }
+    public OfferRateMode RateMode { get; private set; } = OfferRateMode.Fixed;
 
     public decimal MinAmount { get; private set; }
-    public decimal MaxAmount { get; private set; }
+    public decimal? MaxAmount { get; private set; }
     public string? Notes { get; private set; }
     public OfferStatus Status { get; private set; } = OfferStatus.Open;
     public DateTime ExpiresAt { get; private set; }
@@ -47,7 +48,7 @@ public class Offer : BaseEntity
     public IReadOnlyCollection<Transaction> Transactions => _transactions.AsReadOnly();
 
     public decimal RemainingAmount => Amount - AmountFilled;
-    public decimal BuyEquivalent => Rate > 0 ? Amount / Rate : 0;
+    public decimal BuyEquivalent => Rate is > 0 ? Amount / Rate.Value : 0;
 
     private Offer() { }
 
@@ -59,16 +60,19 @@ public class Offer : BaseEntity
         string sellCountryCode,
         string buyCountryCode,
         decimal amount,
-        decimal rate,
+        OfferRateMode rateMode,
+        decimal? rate,
         decimal minAmount,
-        decimal maxAmount,
+        decimal? maxAmount,
         string? notes,
         int expiryHours = 24)
     {
         if (amount <= 0) throw new ArgumentException("Le montant doit être positif.");
-        if (rate <= 0) throw new ArgumentException("Le taux doit être positif.");
+        if (rateMode == OfferRateMode.Fixed && (rate is null || rate <= 0))
+            throw new ArgumentException("Un taux positif est requis en mode fixe.");
         if (minAmount <= 0) throw new ArgumentException("Le montant minimum doit être positif.");
-        if (minAmount > maxAmount) throw new ArgumentException("Le minimum ne peut pas dépasser le maximum.");
+        if (maxAmount is not null && minAmount > maxAmount)
+            throw new ArgumentException("Le minimum ne peut pas dépasser le maximum.");
         if (minAmount > amount) throw new ArgumentException("Le minimum ne peut pas dépasser le montant total.");
 
         return new Offer
@@ -80,7 +84,8 @@ public class Offer : BaseEntity
             SellCountryCode = sellCountryCode.ToUpperInvariant(),
             BuyCountryCode = buyCountryCode.ToUpperInvariant(),
             Amount = amount,
-            Rate = rate,
+            RateMode = rateMode,
+            Rate = rateMode == OfferRateMode.Fixed ? rate : null,
             MinAmount = minAmount,
             MaxAmount = maxAmount,
             Notes = notes,

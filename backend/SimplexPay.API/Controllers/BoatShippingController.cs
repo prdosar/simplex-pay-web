@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SimplexPay.API.Authorization;
 using SimplexPay.Application.Features.BoatShipping.Commands;
 using SimplexPay.Application.Features.BoatShipping.Queries;
 using System.Security.Claims;
@@ -39,6 +40,7 @@ public class BoatShippingController(IMediator mediator) : ControllerBase
 
     [HttpPost]
     [Authorize]
+    [RequireVerifiedEmail]
     public async Task<IActionResult> CreateOffer([FromBody] CreateBoatShippingOfferRequest request, CancellationToken ct)
     {
         var result = await mediator.Send(new CreateBoatShippingOfferCommand(

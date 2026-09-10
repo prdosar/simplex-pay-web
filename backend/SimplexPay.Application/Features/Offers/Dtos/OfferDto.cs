@@ -16,10 +16,11 @@ public record OfferDto(
     decimal Amount,
     decimal AmountFilled,
     decimal RemainingAmount,
-    decimal Rate,                   // unités de SellCurrency par 1 BuyCurrency
-    decimal BuyEquivalent,          // montant équivalent en BuyCurrency
+    string RateMode,                // "Fixed" | "GoogleDaily" | "XeDaily"
+    decimal? Rate,                  // unités de SellCurrency par 1 BuyCurrency (null si RateMode != Fixed)
+    decimal BuyEquivalent,          // montant équivalent en BuyCurrency (0 si Rate non fixé)
     decimal MinAmount,
-    decimal MaxAmount,
+    decimal? MaxAmount,
     string Status,
     DateTime ExpiresAt,
     DateTime CreatedAt,
@@ -44,6 +45,7 @@ public record OfferDto(
             offer.Amount,
             offer.AmountFilled,
             offer.RemainingAmount,
+            offer.RateMode.ToString(),
             offer.Rate,
             offer.BuyEquivalent,
             offer.MinAmount,

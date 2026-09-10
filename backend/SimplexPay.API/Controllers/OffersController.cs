@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SimplexPay.API.Authorization;
 using SimplexPay.Application.Features.Offers.Commands;
 using SimplexPay.Application.Features.Offers.Queries;
 using System.Security.Claims;
@@ -97,34 +98,33 @@ public class OffersController(IMediator mediator) : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>Crée une nouvelle offre (authentification requise).</summary>
+    /// <summary>Crée une nouvelle offre (authentification requise, email vérifié).</summary>
     [HttpPost]
     [Authorize]
+    [RequireVerifiedEmail]
     public async Task<IActionResult> CreateOffer([FromBody] CreateOfferRequest request, CancellationToken ct)
     {
         var command = new CreateOfferCommand(
             UserId: CurrentUserId,
-            Type: request.Type,
             SellCurrencyCode: request.SellCurrencyCode,
-            BuyCurrencyCode: request.BuyCurrencyCode,
             SellCountryCode: request.SellCountryCode,
-            BuyCountryCode: request.BuyCountryCode,
             Amount: request.Amount,
+            RateMode: request.RateMode,
             Rate: request.Rate,
             MinAmount: request.MinAmount,
-            MaxAmount: request.MaxAmount,
             Notes: request.Notes,
             ExpiryHours: request.ExpiryHours,
-            PaymentMethods: request.PaymentMethods
+            PaymentMethodIds: request.PaymentMethodIds
         );
 
         var result = await mediator.Send(command, ct);
         return Created($"/api/offers/{result.Id}", result);
     }
 
-    /// <summary>Annule une offre (créateur uniquement).</summary>
+    /// <summary>Annule une offre (créateur uniquement, email vérifié).</summary>
     [HttpDelete("{id:guid}/cancel")]
     [Authorize]
+    [RequireVerifiedEmail]
     public async Task<IActionResult> CancelOffer(Guid id, CancellationToken ct)
     {
         await mediator.Send(new CancelOfferCommand(id, CurrentUserId), ct);
@@ -133,16 +133,13 @@ public class OffersController(IMediator mediator) : ControllerBase
 }
 
 public record CreateOfferRequest(
-    string Type,
     string SellCurrencyCode,
-    string BuyCurrencyCode,
     string SellCountryCode,
-    string BuyCountryCode,
     decimal Amount,
-    decimal Rate,
+    string RateMode,
+    decimal? Rate,
     decimal MinAmount,
-    decimal MaxAmount,
     string? Notes,
     int ExpiryHours = 24,
-    IList<OfferPaymentMethodInput>? PaymentMethods = null
+    IList<Guid>? PaymentMethodIds = null
 );

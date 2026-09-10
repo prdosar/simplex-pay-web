@@ -6,6 +6,7 @@ import { routing } from '@/i18n/routing'
 import { AuthProvider } from '@/context/AuthContext'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
+import UnverifiedEmailBanner from '@/components/layout/UnverifiedEmailBanner'
 
 export default async function LocaleLayout({
   children,
@@ -26,6 +27,7 @@ export default async function LocaleLayout({
         <NextIntlClientProvider messages={messages}>
           <AuthProvider>
             <Navbar />
+            <UnverifiedEmailBanner />
             <main className="flex-1">{children}</main>
             <Footer />
           </AuthProvider>

@@ -7,6 +7,7 @@ import { useTranslations, useLocale } from 'next-intl'
 import { api } from '@/lib/api'
 import { flagUrl } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
+import { useDisplayRate } from '@/lib/useDailyRate'
 import type { OfferDto } from '@/types/api'
 
 export default function OfferDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -39,6 +40,19 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
   const fromMethods = offer.paymentMethods.filter(pm => pm.side === 'From')
   const toMethods = offer.paymentMethods.filter(pm => pm.side === 'To')
 
+  const { value: rateValue, sourceLabel } = useDisplayRate(
+    offer.rateMode,
+    offer.rate,
+    offer.sellCurrency,
+    offer.buyCurrency
+  )
+  const rateSourceLabel =
+    sourceLabel === 'Fixed'
+      ? null
+      : sourceLabel === 'Google'
+        ? (locale === 'fr' ? 'Taux Google du jour' : 'Google daily rate')
+        : (locale === 'fr' ? 'Taux XE du jour' : 'XE daily rate')
+
   return (
     <div className="max-w-3xl mx-auto px-4 py-10">
       <Link href={`/${locale}/offres`} className="text-sm text-[--color-muted-foreground] hover:text-[--color-primary] flex items-center gap-1 mb-6">
@@ -65,36 +79,43 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
             </div>
           </div>
           <div className="text-4xl font-bold mt-4">
-            {offer.rate.toLocaleString()} <span className="text-xl font-normal text-white/80">{offer.sellCurrencySymbol}/{offer.buyCurrencySymbol}</span>
+            {rateValue !== null
+              ? rateValue.toLocaleString(locale, { maximumFractionDigits: 2 })
+              : '—'
+            }
+            <span className="text-xl font-normal text-white/80 ml-2">
+              {offer.sellCurrencySymbol}/{offer.buyCurrencySymbol}
+            </span>
           </div>
+          {rateSourceLabel && (
+            <p className="text-sm text-white/80 mt-1">{rateSourceLabel}</p>
+          )}
         </div>
 
         <div className="p-6">
           {/* Amounts */}
-          <div className="grid grid-cols-3 gap-4 mb-6 pb-6 border-b border-[--color-border]">
+          <div className="grid grid-cols-2 gap-4 mb-6 pb-6 border-b border-[--color-border]">
             <div>
               <p className="text-xs text-[--color-muted-foreground] uppercase tracking-wide mb-1">Disponible</p>
               <p className="text-xl font-bold">{offer.remainingAmount.toLocaleString()} <span className="text-sm text-[--color-muted-foreground]">{offer.sellCurrencySymbol}</span></p>
             </div>
             <div>
               <p className="text-xs text-[--color-muted-foreground] uppercase tracking-wide mb-1">Min</p>
-              <p className="text-xl font-bold">{offer.minAmount.toLocaleString()}</p>
-            </div>
-            <div>
-              <p className="text-xs text-[--color-muted-foreground] uppercase tracking-wide mb-1">Max</p>
-              <p className="text-xl font-bold">{offer.maxAmount.toLocaleString()}</p>
+              <p className="text-xl font-bold">{offer.minAmount.toLocaleString()} <span className="text-sm text-[--color-muted-foreground]">{offer.sellCurrencySymbol}</span></p>
             </div>
           </div>
 
-          {/* Equivalent */}
-          <div className="bg-[--color-muted] rounded-xl p-4 mb-6">
-            <p className="text-sm text-[--color-muted-foreground]">
-              {t('buyEquivalent', { currency: offer.buyCurrency })}
-            </p>
-            <p className="text-2xl font-bold text-[--color-primary]">
-              {offer.buyCurrencySymbol} {offer.buyEquivalent.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-            </p>
-          </div>
+          {/* Equivalent — uniquement si on connaît le taux */}
+          {rateValue !== null && rateValue > 0 && (
+            <div className="bg-[--color-muted] rounded-xl p-4 mb-6">
+              <p className="text-sm text-[--color-muted-foreground]">
+                {t('buyEquivalent', { currency: offer.buyCurrency })}
+              </p>
+              <p className="text-2xl font-bold text-[--color-primary]">
+                {offer.buyCurrencySymbol} {(offer.amount / rateValue).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+              </p>
+            </div>
+          )}
 
           {/* Payment methods */}
           {(fromMethods.length > 0 || toMethods.length > 0) && (

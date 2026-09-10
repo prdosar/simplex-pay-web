@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SimplexPay.API.Authorization;
 using SimplexPay.Application.Features.TravelKilo.Commands;
 using SimplexPay.Application.Features.TravelKilo.Queries;
 using System.Security.Claims;
@@ -39,6 +40,7 @@ public class TravelKiloController(IMediator mediator) : ControllerBase
 
     [HttpPost]
     [Authorize]
+    [RequireVerifiedEmail]
     public async Task<IActionResult> CreateOffer([FromBody] CreateTravelKiloOfferRequest request, CancellationToken ct)
     {
         var result = await mediator.Send(new CreateTravelKiloOfferCommand(

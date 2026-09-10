@@ -27,11 +27,13 @@ export default function RegisterPage() {
     lastName: '',
     email: '',
     password: '',
+    confirmPassword: '',
     phoneNumber: '',
     country: '',
     whatsAppNumber: '',
   })
   const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [countryOpen, setCountryOpen] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -53,12 +55,17 @@ export default function RegisterPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
+    if (form.password !== form.confirmPassword) {
+      setError(t('passwordMismatch'))
+      return
+    }
     setLoading(true)
     try {
-      const body = { ...form, whatsAppNumber: form.whatsAppNumber || undefined }
+      const { confirmPassword: _cp, ...rest } = form
+      const body = { ...rest, whatsAppNumber: form.whatsAppNumber || undefined }
       const auth = await api.post<AuthResponse>('/api/auth/register', body)
       login(auth)
-      router.push(`/${locale}`)
+      router.push(`/${locale}/auth/verifier-email?email=${encodeURIComponent(form.email)}`)
     } catch (err: unknown) {
       const e = err as { status?: number; errors?: Record<string, string[]> }
       if (e.status === 409)
@@ -246,6 +253,36 @@ export default function RegisterPage() {
                 </button>
               </div>
               <p className="text-[12px] mt-1.5" style={{ color: '#94a3b8' }}>{t('passwordHint')}</p>
+            </div>
+
+            {/* Confirm password */}
+            <div>
+              <label className="block text-sm font-semibold mb-1.5" style={{ color: '#334155' }}>
+                {t('confirmPassword')}
+              </label>
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  value={form.confirmPassword}
+                  onChange={set('confirmPassword')}
+                  required
+                  minLength={8}
+                  autoComplete="new-password"
+                  className={`${inputClass} pr-12`}
+                  style={{ color: '#0f172a' }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(v => !v)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[13px]"
+                  style={{ color: '#94a3b8' }}
+                >
+                  {showConfirmPassword ? '🙈' : '👁'}
+                </button>
+              </div>
+              {form.confirmPassword && form.password !== form.confirmPassword && (
+                <p className="text-[12px] mt-1.5" style={{ color: '#ef4444' }}>{t('passwordMismatch')}</p>
+              )}
             </div>
 
             {/* Phone */}

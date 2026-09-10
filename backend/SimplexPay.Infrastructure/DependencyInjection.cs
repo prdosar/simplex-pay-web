@@ -23,6 +23,16 @@ public static class DependencyInjection
         services.AddScoped<ICurrencyRepository, CurrencyRepository>();
         services.AddScoped<ITokenService, TokenService>();
         services.AddSingleton<IPasswordHasher, PasswordHasherService>();
+        services.AddScoped<IEmailService, EmailService>();
+        services.AddScoped<IEmailVerificationService, EmailVerificationService>();
+
+        services.AddMemoryCache();
+        services.AddHttpClient("ExchangeRates", c =>
+        {
+            c.Timeout = TimeSpan.FromSeconds(6);
+            c.DefaultRequestHeaders.UserAgent.ParseAdd("SimplexPay/1.0");
+        });
+        services.AddScoped<IExchangeRateService, ExchangeRateService>();
 
         return services;
     }

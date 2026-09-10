@@ -12,6 +12,10 @@ public class User : BaseEntity
     public string? WhatsAppNumber { get; private set; }
     public string Country { get; private set; } = default!;
     public UserStatus Status { get; private set; } = UserStatus.PendingVerification;
+    public bool EmailVerified { get; private set; } = false;
+    public string? EmailVerificationCodeHash { get; private set; }
+    public DateTime? EmailVerificationCodeExpiresAt { get; private set; }
+    public int EmailVerificationAttempts { get; private set; } = 0;
     public bool IsAdmin { get; private set; } = false;
     public decimal Rating { get; private set; } = 0;
     public int TransactionCount { get; private set; } = 0;
@@ -40,6 +44,30 @@ public class User : BaseEntity
 
     public void Activate()
     {
+        Status = UserStatus.Active;
+        MarkUpdated();
+    }
+
+    public void SetEmailVerificationCode(string codeHash, DateTime expiresAt)
+    {
+        EmailVerificationCodeHash = codeHash;
+        EmailVerificationCodeExpiresAt = expiresAt;
+        EmailVerificationAttempts = 0;
+        MarkUpdated();
+    }
+
+    public void IncrementEmailVerificationAttempts()
+    {
+        EmailVerificationAttempts++;
+        MarkUpdated();
+    }
+
+    public void MarkEmailVerified()
+    {
+        EmailVerified = true;
+        EmailVerificationCodeHash = null;
+        EmailVerificationCodeExpiresAt = null;
+        EmailVerificationAttempts = 0;
         Status = UserStatus.Active;
         MarkUpdated();
     }

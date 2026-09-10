@@ -1,24 +1,51 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
+import { useRouter } from 'next/navigation'
 import useSWR from 'swr'
-import { api } from '@/lib/api'
+import { Globe, ArrowRightLeft, Pencil, Check } from 'lucide-react'
+import { api, ApiError } from '@/lib/api'
 import { useAuth } from '@/context/AuthContext'
-import type { CurrencyDto, CountryDto, OfferDto, PaymentMethodDto } from '@/types/api'
+import type { CountryDto, OfferDto, PaymentMethodDto } from '@/types/api'
 import Link from 'next/link'
 
 type Category = 'devises' | 'kilos' | 'bateau'
+type RateMode = 'GoogleDaily' | 'XeDaily' | 'Fixed'
 
 const INPUT_CLS = 'w-full border border-[--color-border] rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[--color-primary]'
 const SELECT_CLS = INPUT_CLS
 
+const DEFAULT_AFRICAN_COUNTRY = 'TG' // fallback si le pays de l'user n'est pas africain
+
+// Couleurs de marque pour les moyens de paiement (fallback = slate)
+function paymentAccent(name: string, type: string): string {
+  const n = name.toLowerCase()
+  if (n.includes('cash')) return '#16a34a'                            // vert billets
+  if (n.includes('wave')) return '#0ea5e9'                            // bleu Wave
+  if (n.includes('orange money') || n.startsWith('orange')) return '#f97316' // orange
+  if (n.includes('mtn') || n.includes('momo')) return '#eab308'       // jaune MTN
+  if (n.includes('moov')) return '#f59e0b'                            // ambre Moov
+  if (n.includes('t-money') || n.includes('tmoney')) return '#dc2626' // rouge Togocom
+  if (n.includes('airtel')) return '#dc2626'                          // rouge Airtel
+  if (n.includes('m-pesa') || n.includes('mpesa')) return '#16a34a'   // vert Vodacom
+  if (n.includes('opay')) return '#22c55e'                            // vert OPay
+  if (n.includes('palmpay')) return '#7c3aed'                         // violet PalmPay
+  if (n.includes('free money')) return '#84cc16'                      // lime Free
+  if (n.includes('vodafone')) return '#dc2626'                        // rouge Vodafone
+  if (n.includes('africell')) return '#eab308'
+  if (n.includes('qmoney')) return '#7c3aed'
+  if (n.includes('interac')) return '#dc2626'                         // rouge Interac
+  if (type === 'BankTransfer' || n.includes('virement') || n.includes('bank')) return '#1e40af' // bleu marine
+  return '#64748b' // slate fallback
+}
+
 export default function CreateOfferPage() {
   const t = useTranslations('createOffer')
   const locale = useLocale()
-  const { isAuthenticated } = useAuth()
+  const router = useRouter()
+  const { isAuthenticated, user, logout } = useAuth()
 
-  const { data: currencies } = useSWR<CurrencyDto[]>('/api/currencies', (url: string) => api.get<CurrencyDto[]>(url))
   const { data: countries } = useSWR<CountryDto[]>('/api/countries', (url: string) => api.get<CountryDto[]>(url))
 
   const [category, setCategory] = useState<Category>('devises')
@@ -28,20 +55,42 @@ export default function CreateOfferPage() {
 
   // ── Devises form ──
   const [form, setForm] = useState({
-    type: 'Sell',
-    sellCurrencyCode: '',
-    buyCurrencyCode: '',
     sellCountryCode: '',
-    buyCountryCode: '',
     amount: '',
+    rateMode: 'GoogleDaily' as RateMode,
     rate: '',
     minAmount: '',
-    maxAmount: '',
     notes: '',
     expiryHours: '48',
   })
-  const [selectedFromMethods, setSelectedFromMethods] = useState<string[]>([])
-  const [selectedToMethods, setSelectedToMethods] = useState<string[]>([])
+  const [selectedPaymentMethods, setSelectedPaymentMethods] = useState<string[]>([])
+
+  // Pays africains = ceux qui vendent une devise (currencyType='Sell')
+  const africanCountries = useMemo(
+    () => countries?.filter(c => c.currencyType === 'Sell') ?? [],
+    [countries]
+  )
+
+  // Défaut : pays de l'user si africain, sinon Togo
+  useEffect(() => {
+    if (form.sellCountryCode || !africanCountries.length) return
+    const userAfrican = user?.country && africanCountries.find(c => c.code === user.country)
+    const chosen = userAfrican?.code
+      ?? africanCountries.find(c => c.code === DEFAULT_AFRICAN_COUNTRY)?.code
+      ?? africanCountries[0]?.code
+    if (chosen) setForm(prev => ({ ...prev, sellCountryCode: chosen }))
+  }, [africanCountries, user?.country, form.sellCountryCode])
+
+  const sellCountryData = countries?.find(c => c.code === form.sellCountryCode)
+  const sellCurrencyCode = sellCountryData?.currencyCode ?? ''
+  const availablePaymentMethods: PaymentMethodDto[] = sellCountryData?.paymentMethods ?? []
+
+  // Reset des méthodes sélectionnées quand on change de pays
+  useEffect(() => {
+    setSelectedPaymentMethods(prev =>
+      prev.filter(id => availablePaymentMethods.some(pm => pm.id === id))
+    )
+  }, [form.sellCountryCode, availablePaymentMethods])
 
   // ── TravelKilo form ──
   const [tkForm, setTkForm] = useState({
@@ -74,21 +123,42 @@ export default function CreateOfferPage() {
   const setBs = (k: keyof typeof bsForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setBsForm(prev => ({ ...prev, [k]: e.target.value }))
 
-  const sellCountries = countries?.filter(c => c.currencyCode === form.sellCurrencyCode) ?? []
-  const buyCountries = countries?.filter(c => c.currencyCode === form.buyCurrencyCode) ?? []
-  const sellCountryData = countries?.find(c => c.code === form.sellCountryCode)
-  const buyCountryData = countries?.find(c => c.code === form.buyCountryCode)
-  const sellMethods: PaymentMethodDto[] = sellCountryData?.paymentMethods ?? []
-  const buyMethods: PaymentMethodDto[] = buyCountryData?.paymentMethods ?? []
-  const sellCurrencies = currencies?.filter(c => c.type === 'Sell') ?? []
-  const buyCurrencies = currencies?.filter(c => c.type === 'Buy') ?? []
+  function togglePaymentMethod(id: string) {
+    setSelectedPaymentMethods(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    )
+  }
 
-  function toggleMethod(id: string, side: 'from' | 'to') {
-    if (side === 'from') {
-      setSelectedFromMethods(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
-    } else {
-      setSelectedToMethods(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
+  function handleApiError(err: unknown) {
+    if (err instanceof ApiError) {
+      if (err.status === 401) {
+        setError(locale === 'fr'
+          ? 'Session expirée. Reconnecte-toi pour publier une offre.'
+          : 'Session expired. Log in again to post an offer.')
+        logout()
+        setTimeout(() => router.push(`/${locale}/auth/connexion`), 1200)
+        return
+      }
+      if (err.status === 403) {
+        const body = err.body as { error?: string; message?: string } | undefined
+        if (body?.error === 'EmailNotVerified') {
+          setError(locale === 'fr'
+            ? 'Vérifie ton email avant de publier une offre.'
+            : 'Verify your email before posting an offer.')
+          return
+        }
+        setError(body?.message ?? (locale === 'fr' ? 'Action non autorisée.' : 'Action not allowed.'))
+        return
+      }
+      const body = err.body as { errors?: Record<string, string[]>; message?: string; title?: string } | undefined
+      if (body?.errors) {
+        setError(Object.values(body.errors).flat().join(' '))
+        return
+      }
+      if (body?.message) { setError(body.message); return }
+      if (body?.title) { setError(body.title); return }
     }
+    setError(locale === 'fr' ? 'Une erreur est survenue.' : 'An error occurred.')
   }
 
   if (!isAuthenticated) return (
@@ -118,26 +188,34 @@ export default function CreateOfferPage() {
   async function handleSubmitDevises(e: React.FormEvent) {
     e.preventDefault()
     setError('')
+    if (!form.sellCountryCode) {
+      setError(locale === 'fr' ? 'Sélectionnez un pays.' : 'Select a country.')
+      return
+    }
+    if (form.rateMode === 'Fixed' && (!form.rate || Number(form.rate) <= 0)) {
+      setError(locale === 'fr' ? 'Renseignez votre taux fixe.' : 'Enter your fixed rate.')
+      return
+    }
+    if (!selectedPaymentMethods.length) {
+      setError(locale === 'fr' ? 'Choisissez au moins un moyen de paiement.' : 'Choose at least one payment method.')
+      return
+    }
     setLoading(true)
     try {
-      const paymentMethods = [
-        ...selectedFromMethods.map(id => ({ paymentMethodId: id, side: 'From' })),
-        ...selectedToMethods.map(id => ({ paymentMethodId: id, side: 'To' })),
-      ]
       await api.post<OfferDto>('/api/offers', {
-        ...form,
+        sellCurrencyCode,
+        sellCountryCode: form.sellCountryCode,
         amount: Number(form.amount),
-        rate: Number(form.rate),
+        rateMode: form.rateMode,
+        rate: form.rateMode === 'Fixed' ? Number(form.rate) : null,
         minAmount: Number(form.minAmount),
-        maxAmount: Number(form.maxAmount),
+        notes: form.notes || null,
         expiryHours: Number(form.expiryHours),
-        paymentMethods,
+        paymentMethodIds: selectedPaymentMethods,
       })
       setSuccess(true)
     } catch (err: unknown) {
-      const e = err as { errors?: Record<string, string[]> }
-      if (e.errors) setError(Object.values(e.errors).flat().join(' '))
-      else setError(locale === 'fr' ? 'Une erreur est survenue.' : 'An error occurred.')
+      handleApiError(err)
     } finally {
       setLoading(false)
     }
@@ -160,9 +238,7 @@ export default function CreateOfferPage() {
       })
       setSuccess(true)
     } catch (err: unknown) {
-      const e = err as { errors?: Record<string, string[]> }
-      if (e.errors) setError(Object.values(e.errors).flat().join(' '))
-      else setError(locale === 'fr' ? 'Une erreur est survenue.' : 'An error occurred.')
+      handleApiError(err)
     } finally {
       setLoading(false)
     }
@@ -185,9 +261,7 @@ export default function CreateOfferPage() {
       })
       setSuccess(true)
     } catch (err: unknown) {
-      const e = err as { errors?: Record<string, string[]> }
-      if (e.errors) setError(Object.values(e.errors).flat().join(' '))
-      else setError(locale === 'fr' ? 'Une erreur est survenue.' : 'An error occurred.')
+      handleApiError(err)
     } finally {
       setLoading(false)
     }
@@ -227,136 +301,226 @@ export default function CreateOfferPage() {
       {/* ── DEVISES FORM ── */}
       {category === 'devises' && (
         <form onSubmit={handleSubmitDevises} className="bg-white border border-[--color-border] rounded-2xl p-8 space-y-6">
+          {/* Pays vendeur (impose la devise vendue) */}
           <div>
-            <label className="block text-sm font-medium mb-2">{t('type')}</label>
-            <div className="grid grid-cols-2 gap-3">
-              {[{val:'Sell', label:t('typeSell')}, {val:'Buy', label:t('typeBuy')}].map(opt => (
-                <button
-                  key={opt.val}
-                  type="button"
-                  onClick={() => setForm(p => ({...p, type:opt.val}))}
-                  className={`p-3 rounded-xl border text-sm font-medium transition-colors ${
-                    form.type === opt.val
-                      ? 'border-[--color-primary] bg-[--color-primary-light] text-[--color-primary]'
-                      : 'border-[--color-border] hover:border-[--color-primary]'
-                  }`}
-                >
-                  {opt.label}
-                </button>
+            <label className="block text-sm font-medium mb-1.5">{t('sellCountry')}</label>
+            <select value={form.sellCountryCode} onChange={setF('sellCountryCode')} required className={SELECT_CLS}>
+              {africanCountries.map(c => (
+                <option key={c.code} value={c.code}>
+                  {locale === 'fr' ? c.nameFr : c.name} ({c.currencyCode})
+                </option>
               ))}
-            </div>
+            </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1.5">{t('sellCurrency')}</label>
-              <select value={form.sellCurrencyCode} onChange={e => setForm(p => ({...p, sellCurrencyCode: e.target.value, sellCountryCode: ''}))}
-                className={SELECT_CLS}>
-                {sellCurrencies.map(c => <option key={c.code} value={c.code}>{c.code} — {locale==='fr'?c.nameFr:c.name}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1.5">{t('buyCurrency')}</label>
-              <select value={form.buyCurrencyCode} onChange={e => setForm(p => ({...p, buyCurrencyCode: e.target.value, buyCountryCode: ''}))}
-                className={SELECT_CLS}>
-                {buyCurrencies.map(c => <option key={c.code} value={c.code}>{c.code} — {locale==='fr'?c.nameFr:c.name}</option>)}
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1.5">{t('sellCountry')}</label>
-              <select value={form.sellCountryCode} onChange={setF('sellCountryCode')} className={SELECT_CLS}>
-                {sellCountries.map(c => <option key={c.code} value={c.code}>{locale==='fr'?c.nameFr:c.name}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1.5">{t('buyCountry')}</label>
-              <select value={form.buyCountryCode} onChange={setF('buyCountryCode')} className={SELECT_CLS}>
-                {buyCountries.map(c => <option key={c.code} value={c.code}>{locale==='fr'?c.nameFr:c.name}</option>)}
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1.5">{t('amount')}</label>
-              <input type="number" value={form.amount} onChange={setF('amount')} required min="1" className={INPUT_CLS} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1.5">{t('rate')}</label>
-              <input type="number" value={form.rate} onChange={setF('rate')} required min="0.01" step="0.01" className={INPUT_CLS} />
-              <p className="text-xs text-[--color-muted-foreground] mt-1">{t('rateHelp')}</p>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1.5">{t('minAmount')}</label>
-              <input type="number" value={form.minAmount} onChange={setF('minAmount')} required min="1" className={INPUT_CLS} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1.5">{t('maxAmount')}</label>
-              <input type="number" value={form.maxAmount} onChange={setF('maxAmount')} required min="1" className={INPUT_CLS} />
-            </div>
-          </div>
-
-          {sellMethods.length > 0 && (
-            <div>
-              <label className="block text-sm font-medium mb-2">{t('paymentMethods')} — {t('from')}</label>
-              <div className="flex flex-wrap gap-2">
-                {sellMethods.map(pm => (
-                  <button key={pm.id} type="button" onClick={() => toggleMethod(pm.id, 'from')}
-                    className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
-                      selectedFromMethods.includes(pm.id)
-                        ? 'border-[--color-primary] bg-[--color-primary-light] text-[--color-primary]'
-                        : 'border-[--color-border] text-[--color-muted-foreground] hover:border-[--color-primary]'
-                    }`}>
-                    {pm.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-          {buyMethods.length > 0 && (
-            <div>
-              <label className="block text-sm font-medium mb-2">{t('paymentMethods')} — {t('to')}</label>
-              <div className="flex flex-wrap gap-2">
-                {buyMethods.map(pm => (
-                  <button key={pm.id} type="button" onClick={() => toggleMethod(pm.id, 'to')}
-                    className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
-                      selectedToMethods.includes(pm.id)
-                        ? 'border-[--color-primary] bg-[--color-primary-light] text-[--color-primary]'
-                        : 'border-[--color-border] text-[--color-muted-foreground] hover:border-[--color-primary]'
-                    }`}>
-                    {pm.name}
-                  </button>
-                ))}
-              </div>
+          {/* Récap : X → CAD */}
+          {sellCurrencyCode && (
+            <div className="flex items-center gap-3 bg-[--color-primary-light] border border-[--color-primary] rounded-xl px-4 py-3 text-sm">
+              <span className="font-semibold">{sellCurrencyCode}</span>
+              <span className="text-[--color-muted-foreground]">{t('buyCurrencyLabel')}</span>
+              <span className="font-semibold">CAD</span>
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1.5">{t('expiryHours')}</label>
-              <select value={form.expiryHours} onChange={setF('expiryHours')} className={SELECT_CLS}>
-                <option value="24">24h</option>
-                <option value="48">48h</option>
-                <option value="72">72h</option>
-                <option value="168">7 {locale === 'fr' ? 'jours' : 'days'}</option>
-              </select>
-            </div>
+          {/* Montant disponible */}
+          <div>
+            <label className="block text-sm font-medium mb-1.5">
+              {t('amount')} {sellCurrencyCode && <span className="text-[--color-muted-foreground]">({sellCurrencyCode})</span>}
+            </label>
+            <input type="number" value={form.amount} onChange={setF('amount')} required min="1" className={INPUT_CLS} />
           </div>
+
+          {/* Rate mode : 3 options — code couleur explicite pour la sélection */}
+          <div>
+            <label className="block text-sm font-medium mb-2">{t('rateMode')}</label>
+            <div className="grid grid-cols-3 gap-3">
+              {([
+                { val: 'GoogleDaily', label: t('rateModeGoogle'), Icon: Globe,          accent: '#3b82f6' }, // blue
+                { val: 'XeDaily',     label: t('rateModeXe'),     Icon: ArrowRightLeft, accent: '#f97316' }, // orange
+                { val: 'Fixed',       label: t('rateModeFixed'),  Icon: Pencil,         accent: '#0d9488' }, // teal
+              ] as { val: RateMode; label: string; Icon: typeof Globe; accent: string }[]).map(opt => {
+                const isSelected = form.rateMode === opt.val
+                return (
+                  <button
+                    key={opt.val}
+                    type="button"
+                    onClick={() => setForm(p => ({ ...p, rateMode: opt.val }))}
+                    aria-pressed={isSelected}
+                    className="relative p-4 rounded-xl text-sm font-semibold text-left transition-all"
+                    style={{
+                      border: isSelected ? `2px solid ${opt.accent}` : '2px solid #e2e8f0',
+                      background: isSelected ? `${opt.accent}12` : 'white',
+                      color: isSelected ? opt.accent : '#475569',
+                      boxShadow: isSelected ? `0 6px 20px -8px ${opt.accent}80` : 'none',
+                    }}
+                    onMouseEnter={e => {
+                      if (!isSelected) e.currentTarget.style.borderColor = opt.accent + '80'
+                    }}
+                    onMouseLeave={e => {
+                      if (!isSelected) e.currentTarget.style.borderColor = '#e2e8f0'
+                    }}
+                  >
+                    <div
+                      className="w-8 h-8 rounded-lg flex items-center justify-center mb-2"
+                      style={{
+                        background: isSelected ? opt.accent : `${opt.accent}18`,
+                        color: isSelected ? 'white' : opt.accent,
+                      }}
+                    >
+                      <opt.Icon size={16} strokeWidth={2.5} />
+                    </div>
+                    <span className="block leading-tight">{opt.label}</span>
+                    {isSelected && (
+                      <span
+                        className="absolute top-2.5 right-2.5 w-5 h-5 rounded-full flex items-center justify-center"
+                        style={{ background: opt.accent, color: 'white' }}
+                      >
+                        <Check size={12} strokeWidth={3} />
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+            {form.rateMode === 'Fixed' && (
+              <div className="mt-3">
+                <label className="block text-sm font-medium mb-1.5">{t('rateFixedValue')}</label>
+                <input type="number" value={form.rate} onChange={setF('rate')} required min="0.01" step="0.01" className={INPUT_CLS} placeholder="490" />
+                <p className="text-xs text-[--color-muted-foreground] mt-1">
+                  {t('rateFixedHelp', { sell: sellCurrencyCode || 'XOF' })}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Montant minimum par tranche */}
+          <div>
+            <label className="block text-sm font-medium mb-1.5">
+              {t('minAmount')} {sellCurrencyCode && <span className="text-[--color-muted-foreground]">({sellCurrencyCode})</span>}
+            </label>
+            <input type="number" value={form.minAmount} onChange={setF('minAmount')} required min="1" className={INPUT_CLS} />
+          </div>
+
+          {/* Moyens de paiement */}
+          {availablePaymentMethods.length > 0 && (() => {
+            const allIds = availablePaymentMethods.map(pm => pm.id)
+            const allSelected = allIds.length > 0 && allIds.every(id => selectedPaymentMethods.includes(id))
+            const toggleAll = () =>
+              setSelectedPaymentMethods(allSelected ? [] : allIds)
+
+            return (
+              <div>
+                <div className="flex items-baseline justify-between mb-2">
+                  <label className="block text-sm font-medium">{t('paymentMethods')}</label>
+                  <span className="text-xs" style={{ color: '#94a3b8' }}>{t('paymentMethodsHint')}</span>
+                </div>
+
+                <div className="space-y-2">
+                  {/* Case "tout" en tête */}
+                  <button
+                    type="button"
+                    onClick={toggleAll}
+                    aria-pressed={allSelected}
+                    className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all text-left"
+                    style={{
+                      border: `2px solid ${allSelected ? '#0d9488' : '#e2e8f0'}`,
+                      background: allSelected ? '#f0fdfa' : 'white',
+                      color: allSelected ? '#0f766e' : '#475569',
+                    }}
+                  >
+                    <span
+                      className="w-5 h-5 rounded flex items-center justify-center shrink-0"
+                      style={{
+                        border: `2px solid ${allSelected ? '#0d9488' : '#cbd5e1'}`,
+                        background: allSelected ? '#0d9488' : 'white',
+                      }}
+                    >
+                      {allSelected && <Check size={12} strokeWidth={3} color="white" />}
+                    </span>
+                    <span className="flex-1">{allSelected ? t('paymentSelectNone') : t('paymentSelectAll')}</span>
+                    <span className="text-xs font-medium" style={{ color: allSelected ? '#0f766e' : '#94a3b8' }}>
+                      {selectedPaymentMethods.length} / {availablePaymentMethods.length}
+                    </span>
+                  </button>
+
+                  {/* Liste individuelle — code couleur par marque */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {availablePaymentMethods.map(pm => {
+                      const isSelected = selectedPaymentMethods.includes(pm.id)
+                      const accent = paymentAccent(pm.name, pm.type)
+                      return (
+                        <button
+                          key={pm.id}
+                          type="button"
+                          onClick={() => togglePaymentMethod(pm.id)}
+                          aria-pressed={isSelected}
+                          className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all text-left"
+                          style={{
+                            border: `2px solid ${isSelected ? accent : '#e2e8f0'}`,
+                            background: isSelected ? `${accent}12` : 'white',
+                            color: isSelected ? accent : '#334155',
+                            boxShadow: isSelected ? `0 4px 12px -6px ${accent}80` : 'none',
+                          }}
+                          onMouseEnter={e => {
+                            if (!isSelected) e.currentTarget.style.borderColor = `${accent}80`
+                          }}
+                          onMouseLeave={e => {
+                            if (!isSelected) e.currentTarget.style.borderColor = '#e2e8f0'
+                          }}
+                        >
+                          {/* Pastille marque (visible même non sélectionné) */}
+                          <span
+                            className="w-5 h-5 rounded flex items-center justify-center shrink-0 transition-all"
+                            style={{
+                              background: isSelected ? accent : `${accent}22`,
+                              border: isSelected ? 'none' : `1.5px solid ${accent}`,
+                            }}
+                          >
+                            {isSelected
+                              ? <Check size={12} strokeWidth={3} color="white" />
+                              : <span className="w-1.5 h-1.5 rounded-full" style={{ background: accent }} />
+                            }
+                          </span>
+                          <span className="flex-1 truncate">{pm.name}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              </div>
+            )
+          })()}
+
+          <div>
+            <label className="block text-sm font-medium mb-1.5">{t('expiryHours')}</label>
+            <select value={form.expiryHours} onChange={setF('expiryHours')} className={SELECT_CLS}>
+              <option value="24">24h</option>
+              <option value="48">48h</option>
+              <option value="72">72h</option>
+              <option value="168">7 {locale === 'fr' ? 'jours' : 'days'}</option>
+            </select>
+          </div>
+
           <div>
             <label className="block text-sm font-medium mb-1.5">{t('notes')}</label>
             <textarea value={form.notes} onChange={setF('notes')} rows={3} maxLength={500}
               className="w-full border border-[--color-border] rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[--color-primary] resize-none" />
           </div>
 
-          {error && <div className="text-sm text-[--color-destructive] bg-red-50 rounded-lg p-3">{error}</div>}
-          <button type="submit" disabled={loading}
-            className="w-full py-3 bg-[--color-primary] text-white font-semibold rounded-xl hover:bg-[--color-primary-dark] transition-colors disabled:opacity-60">
-            {loading ? '...' : t('submit')}
+          {error && (
+            <div className="text-sm rounded-lg p-3 border" style={{ color: '#ef4444', background: '#fef2f2', borderColor: '#fecaca' }}>
+              {error}
+            </div>
+          )}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3 text-[15px] font-bold text-white rounded-xl transition-colors disabled:opacity-60"
+            style={{ background: '#0d9488' }}
+            onMouseEnter={e => { if (!loading) e.currentTarget.style.background = '#0f766e' }}
+            onMouseLeave={e => { if (!loading) e.currentTarget.style.background = '#0d9488' }}
+          >
+            {loading ? (locale === 'fr' ? 'Publication…' : 'Publishing…') : t('submit')}
           </button>
         </form>
       )}
@@ -416,10 +580,20 @@ export default function CreateOfferPage() {
               className="w-full border border-[--color-border] rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[--color-primary] resize-none" />
           </div>
 
-          {error && <div className="text-sm text-[--color-destructive] bg-red-50 rounded-lg p-3">{error}</div>}
-          <button type="submit" disabled={loading}
-            className="w-full py-3 bg-[--color-primary] text-white font-semibold rounded-xl hover:bg-[--color-primary-dark] transition-colors disabled:opacity-60">
-            {loading ? '...' : t('submit')}
+          {error && (
+            <div className="text-sm rounded-lg p-3 border" style={{ color: '#ef4444', background: '#fef2f2', borderColor: '#fecaca' }}>
+              {error}
+            </div>
+          )}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3 text-[15px] font-bold text-white rounded-xl transition-colors disabled:opacity-60"
+            style={{ background: '#0d9488' }}
+            onMouseEnter={e => { if (!loading) e.currentTarget.style.background = '#0f766e' }}
+            onMouseLeave={e => { if (!loading) e.currentTarget.style.background = '#0d9488' }}
+          >
+            {loading ? (locale === 'fr' ? 'Publication…' : 'Publishing…') : t('submit')}
           </button>
         </form>
       )}
@@ -479,10 +653,20 @@ export default function CreateOfferPage() {
               className="w-full border border-[--color-border] rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[--color-primary] resize-none" />
           </div>
 
-          {error && <div className="text-sm text-[--color-destructive] bg-red-50 rounded-lg p-3">{error}</div>}
-          <button type="submit" disabled={loading}
-            className="w-full py-3 bg-[--color-primary] text-white font-semibold rounded-xl hover:bg-[--color-primary-dark] transition-colors disabled:opacity-60">
-            {loading ? '...' : t('submit')}
+          {error && (
+            <div className="text-sm rounded-lg p-3 border" style={{ color: '#ef4444', background: '#fef2f2', borderColor: '#fecaca' }}>
+              {error}
+            </div>
+          )}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3 text-[15px] font-bold text-white rounded-xl transition-colors disabled:opacity-60"
+            style={{ background: '#0d9488' }}
+            onMouseEnter={e => { if (!loading) e.currentTarget.style.background = '#0f766e' }}
+            onMouseLeave={e => { if (!loading) e.currentTarget.style.background = '#0d9488' }}
+          >
+            {loading ? (locale === 'fr' ? 'Publication…' : 'Publishing…') : t('submit')}
           </button>
         </form>
       )}

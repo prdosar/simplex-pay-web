@@ -60,10 +60,9 @@ public class CountryPaymentMethodConfiguration : IEntityTypeConfiguration<Countr
             S("NE", CashId,           true),
             S("NE", OrangeSenId,      true),
 
-            // Togo (XOF)
+            // Togo (XOF) — Wave n'opère pas au Togo
             S("TG", CashId,           true),
             S("TG", MoovCiId,         true),
-            S("TG", WaveId,           false),
 
             // Guinée-Bissau (XOF)
             S("GW", CashId,           true),

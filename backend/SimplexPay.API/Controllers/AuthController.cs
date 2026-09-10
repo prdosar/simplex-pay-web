@@ -36,6 +36,24 @@ public class AuthController(IMediator mediator) : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>Vérifie le code envoyé par email pour activer un compte.</summary>
+    [HttpPost("verify-email")]
+    [AllowAnonymous]
+    public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailCommand command, CancellationToken ct)
+    {
+        var result = await mediator.Send(command, ct);
+        return Ok(result);
+    }
+
+    /// <summary>Renvoie un nouveau code de vérification à l'email indiqué.</summary>
+    [HttpPost("resend-code")]
+    [AllowAnonymous]
+    public async Task<IActionResult> ResendCode([FromBody] ResendVerificationCodeCommand command, CancellationToken ct)
+    {
+        await mediator.Send(command, ct);
+        return NoContent();
+    }
+
     /// <summary>Retourne le profil de l'utilisateur connecté.</summary>
     [HttpGet("me")]
     [Authorize]

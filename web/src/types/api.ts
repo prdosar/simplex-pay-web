@@ -42,6 +42,8 @@ export interface OfferPaymentMethodDto {
   side: 'From' | 'To'
 }
 
+export type OfferRateMode = 'Fixed' | 'GoogleDaily' | 'XeDaily'
+
 export interface OfferDto {
   id: string
   type: 'Sell' | 'Buy'
@@ -56,16 +58,25 @@ export interface OfferDto {
   amount: number
   amountFilled: number
   remainingAmount: number
-  rate: number
+  rateMode: OfferRateMode
+  rate: number | null
   buyEquivalent: number
   minAmount: number
-  maxAmount: number
+  maxAmount: number | null
   status: string
   expiresAt: string
   createdAt: string
   creator: OfferCreatorDto
   paymentMethods: OfferPaymentMethodDto[]
   notes?: string
+}
+
+export interface ExchangeRatePair {
+  from: string
+  to: string
+  google: number | null
+  xe: number | null
+  fetchedAt: string
 }
 
 export interface TravelKiloOfferDto {
@@ -143,6 +154,7 @@ export interface UserDto {
   phone: string
   country: string
   status: string
+  emailVerified: boolean
   rating: number
   transactionCount: number
   createdAt: string

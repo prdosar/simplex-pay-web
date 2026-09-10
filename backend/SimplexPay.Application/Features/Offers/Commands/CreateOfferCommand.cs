@@ -10,74 +10,67 @@ namespace SimplexPay.Application.Features.Offers.Commands;
 
 public record CreateOfferCommand(
     Guid UserId,              // injecté depuis le JWT dans le controller
-    string Type,              // "Sell" | "Buy"
-    string SellCurrencyCode,  // XOF, XAF, NGN, GHS
-    string BuyCurrencyCode,   // CAD, USD, EUR
+    string SellCurrencyCode,  // XOF, XAF, NGN, GHS…
     string SellCountryCode,
-    string BuyCountryCode,
     decimal Amount,
-    decimal Rate,
+    string RateMode,          // "Fixed" | "GoogleDaily" | "XeDaily"
+    decimal? Rate,            // requis uniquement si RateMode == Fixed
     decimal MinAmount,
-    decimal MaxAmount,
     string? Notes,
     int ExpiryHours = 24,
-    IList<OfferPaymentMethodInput>? PaymentMethods = null
+    IList<Guid>? PaymentMethodIds = null
 ) : IRequest<OfferDto>;
-
-public record OfferPaymentMethodInput(Guid PaymentMethodId, string Side);
 
 public class CreateOfferCommandValidator : AbstractValidator<CreateOfferCommand>
 {
     public CreateOfferCommandValidator()
     {
         RuleFor(x => x.UserId).NotEmpty();
-        RuleFor(x => x.Type).NotEmpty()
-            .Must(t => t == "Sell" || t == "Buy")
-            .WithMessage("Type doit être 'Sell' ou 'Buy'.");
         RuleFor(x => x.SellCurrencyCode).NotEmpty().MaximumLength(5);
-        RuleFor(x => x.BuyCurrencyCode).NotEmpty().MaximumLength(5);
         RuleFor(x => x.SellCountryCode).NotEmpty().Length(2, 3);
-        RuleFor(x => x.BuyCountryCode).NotEmpty().Length(2, 3);
         RuleFor(x => x.Amount).GreaterThan(0);
-        RuleFor(x => x.Rate).GreaterThan(0);
+        RuleFor(x => x.RateMode).NotEmpty()
+            .Must(m => m == "Fixed" || m == "GoogleDaily" || m == "XeDaily")
+            .WithMessage("RateMode doit être 'Fixed', 'GoogleDaily' ou 'XeDaily'.");
+        RuleFor(x => x.Rate).GreaterThan(0)
+            .When(x => x.RateMode == "Fixed")
+            .WithMessage("Le taux doit être renseigné et positif quand RateMode = Fixed.");
         RuleFor(x => x.MinAmount).GreaterThan(0);
-        RuleFor(x => x.MaxAmount).GreaterThanOrEqualTo(x => x.MinAmount);
         RuleFor(x => x.Notes).MaximumLength(500).When(x => x.Notes != null);
         RuleFor(x => x.ExpiryHours).InclusiveBetween(1, 168);
-        RuleForEach(x => x.PaymentMethods)
-            .Must(pm => pm.Side == "From" || pm.Side == "To")
-            .WithMessage("Side doit être 'From' ou 'To'.")
-            .When(x => x.PaymentMethods != null);
     }
 }
 
 public class CreateOfferCommandHandler(IOfferRepository offerRepo) : IRequestHandler<CreateOfferCommand, OfferDto>
 {
+    private const string BuyCurrencyCode = "CAD";
+    private const string BuyCountryCode = "CA";
+
     public async Task<OfferDto> Handle(CreateOfferCommand req, CancellationToken ct)
     {
-        if (!Enum.TryParse<OfferType>(req.Type, out var offerType))
-            throw new ConflictException("Type d'offre invalide.");
+        if (!Enum.TryParse<OfferRateMode>(req.RateMode, out var rateMode))
+            throw new ConflictException("RateMode d'offre invalide.");
 
         var offer = Offer.Create(
             userId: req.UserId,
-            type: offerType,
+            type: OfferType.Sell,
             sellCurrencyCode: req.SellCurrencyCode,
-            buyCurrencyCode: req.BuyCurrencyCode,
+            buyCurrencyCode: BuyCurrencyCode,
             sellCountryCode: req.SellCountryCode,
-            buyCountryCode: req.BuyCountryCode,
+            buyCountryCode: BuyCountryCode,
             amount: req.Amount,
+            rateMode: rateMode,
             rate: req.Rate,
             minAmount: req.MinAmount,
-            maxAmount: req.MaxAmount,
+            maxAmount: null,
             notes: req.Notes,
             expiryHours: req.ExpiryHours
         );
 
-        if (req.PaymentMethods != null)
+        if (req.PaymentMethodIds != null)
         {
-            foreach (var pm in req.PaymentMethods)
-                if (Enum.TryParse<OfferSide>(pm.Side, out var side))
-                    offer.AddPaymentMethod(pm.PaymentMethodId, side);
+            foreach (var pmId in req.PaymentMethodIds)
+                offer.AddPaymentMethod(pmId, OfferSide.From);
         }
 
         await offerRepo.AddAsync(offer, ct);

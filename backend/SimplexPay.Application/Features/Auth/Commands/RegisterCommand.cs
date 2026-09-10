@@ -39,6 +39,7 @@ public class RegisterCommandHandler(
     IUserRepository userRepo,
     ITokenService tokenService,
     IPasswordHasher passwordHasher,
+    IEmailVerificationService emailVerification,
     IConfiguration config
 ) : IRequestHandler<RegisterCommand, AuthResponse>
 {
@@ -54,7 +55,8 @@ public class RegisterCommandHandler(
         if (request.WhatsAppNumber is not null)
             user.SetWhatsAppNumber(request.WhatsAppNumber);
 
-        user.Activate();
+        await emailVerification.IssueCodeAsync(user, ct);
+
         await userRepo.AddAsync(user, ct);
         await userRepo.SaveChangesAsync(ct);
 

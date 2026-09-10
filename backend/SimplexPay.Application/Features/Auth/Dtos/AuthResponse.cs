@@ -19,7 +19,8 @@ public record UserDto(
     string Country,
     decimal Rating,
     int TransactionCount,
-    string Status
+    string Status,
+    bool EmailVerified
 )
 {
     public static UserDto From(User user) => new(
@@ -32,6 +33,7 @@ public record UserDto(
         user.Country,
         user.Rating,
         user.TransactionCount,
-        user.Status.ToString()
+        user.Status.ToString(),
+        user.EmailVerified
     );
 }

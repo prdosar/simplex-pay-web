@@ -106,7 +106,12 @@ export default function AccountPage() {
                       {offer.sellCurrency} → {offer.buyCurrency}
                     </p>
                     <p className="text-xs text-[--color-muted-foreground]">
-                      {offer.rate.toLocaleString()} · {offer.remainingAmount.toLocaleString()} {offer.sellCurrencySymbol} {locale === 'fr' ? 'restants' : 'remaining'}
+                      {offer.rateMode === 'Fixed' && offer.rate !== null
+                        ? offer.rate.toLocaleString()
+                        : offer.rateMode === 'GoogleDaily'
+                          ? (locale === 'fr' ? 'Taux Google' : 'Google rate')
+                          : (locale === 'fr' ? 'Taux XE' : 'XE rate')
+                      } · {offer.remainingAmount.toLocaleString()} {offer.sellCurrencySymbol} {locale === 'fr' ? 'restants' : 'remaining'}
                     </p>
                   </div>
                 </div>

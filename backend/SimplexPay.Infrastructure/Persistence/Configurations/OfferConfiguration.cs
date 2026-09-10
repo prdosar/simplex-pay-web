@@ -11,7 +11,8 @@ public class OfferConfiguration : IEntityTypeConfiguration<Offer>
         builder.HasKey(o => o.Id);
         builder.Property(o => o.Amount).HasPrecision(18, 4).IsRequired();
         builder.Property(o => o.AmountFilled).HasPrecision(18, 4);
-        builder.Property(o => o.Rate).HasPrecision(18, 6).IsRequired();
+        builder.Property(o => o.Rate).HasPrecision(18, 6);
+        builder.Property(o => o.RateMode).HasConversion<string>().HasMaxLength(20).IsRequired();
         builder.Property(o => o.MinAmount).HasPrecision(18, 4);
         builder.Property(o => o.MaxAmount).HasPrecision(18, 4);
         builder.Property(o => o.SellCurrencyCode).HasMaxLength(5).IsRequired();

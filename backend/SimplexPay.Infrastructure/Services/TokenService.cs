@@ -25,6 +25,7 @@ public class TokenService(IConfiguration config) : ITokenService
             new Claim(JwtRegisteredClaimNames.FamilyName, user.LastName),
             new Claim("country", user.Country),
             new Claim("status", user.Status.ToString()),
+            new Claim("email_verified", user.EmailVerified ? "true" : "false"),
             new Claim("is_admin", user.IsAdmin ? "true" : "false"),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SimplexPay.Infrastructure.Persistence;
@@ -11,9 +12,11 @@ using SimplexPay.Infrastructure.Persistence;
 namespace SimplexPay.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260909231130_AddEmailVerification")]
+    partial class AddEmailVerification
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -471,6 +474,12 @@ namespace SimplexPay.Infrastructure.Persistence.Migrations
                         },
                         new
                         {
+                            CountryCode = "TG",
+                            PaymentMethodId = new Guid("10000000-0000-0000-0000-000000000004"),
+                            IsPopular = false
+                        },
+                        new
+                        {
                             CountryCode = "GW",
                             PaymentMethodId = new Guid("10000000-0000-0000-0000-000000000001"),
                             IsPopular = true
@@ -645,7 +654,7 @@ namespace SimplexPay.Infrastructure.Persistence.Migrations
                     b.Property<DateTime>("ExpiresAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<decimal?>("MaxAmount")
+                    b.Property<decimal>("MaxAmount")
                         .HasPrecision(18, 4)
                         .HasColumnType("numeric(18,4)");
 
@@ -657,14 +666,9 @@ namespace SimplexPay.Infrastructure.Persistence.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
-                    b.Property<decimal?>("Rate")
+                    b.Property<decimal>("Rate")
                         .HasPrecision(18, 6)
                         .HasColumnType("numeric(18,6)");
-
-                    b.Property<string>("RateMode")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
 
                     b.Property<string>("SellCountryCode")
                         .IsRequired()
