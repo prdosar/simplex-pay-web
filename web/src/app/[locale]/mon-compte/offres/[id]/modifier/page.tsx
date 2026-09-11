@@ -10,7 +10,8 @@ import { api, ApiError } from '@/lib/api'
 import { flagUrl } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
 import { UI_STATUSES, backendToUi, uiToBackend, uiStatusLabel, type UiStatus } from '@/lib/offerStatus'
-import type { OfferDto, CountryDto, PaymentMethodDto } from '@/types/api'
+import { useCountries } from '@/lib/useCountries'
+import type { OfferDto, PaymentMethodDto } from '@/types/api'
 
 const INPUT = 'w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0d9488]'
 const LABEL = 'block text-xs font-bold uppercase tracking-[0.06em] mb-2'
@@ -30,10 +31,7 @@ export default function EditDevisesOfferPage({ params }: { params: Promise<{ id:
     isAuthenticated ? `/api/offers/${id}` : null,
     (url: string) => api.get<OfferDto>(url)
   )
-  const { data: countries } = useSWR<CountryDto[]>(
-    '/api/countries',
-    (url: string) => api.get<CountryDto[]>(url)
-  )
+  const { data: countries } = useCountries()
 
   const [amount, setAmount] = useState('')
   const [remainingAmount, setRemainingAmount] = useState('')

@@ -3,10 +3,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
 import { useRouter } from 'next/navigation'
-import useSWR from 'swr'
 import { Globe, ArrowRightLeft, Pencil, Check } from 'lucide-react'
 import { api, ApiError } from '@/lib/api'
 import { useAuth } from '@/context/AuthContext'
+import { useCountries } from '@/lib/useCountries'
 import type { CountryDto, OfferDto, PaymentMethodDto } from '@/types/api'
 import Link from 'next/link'
 
@@ -46,7 +46,7 @@ export default function CreateOfferPage() {
   const router = useRouter()
   const { isAuthenticated, user, logout } = useAuth()
 
-  const { data: countries } = useSWR<CountryDto[]>('/api/countries', (url: string) => api.get<CountryDto[]>(url))
+  const { data: countries } = useCountries()
 
   const [category, setCategory] = useState<Category>('devises')
   const [error, setError] = useState('')

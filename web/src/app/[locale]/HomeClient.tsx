@@ -8,6 +8,7 @@ import { useAuth } from '@/context/AuthContext'
 import { api } from '@/lib/api'
 import { flagUrl } from '@/lib/utils'
 import { useMarketplaceRealtime } from '@/lib/useMarketplaceRealtime'
+import { useCountries } from '@/lib/useCountries'
 import OfferCard from '@/components/offers/OfferCard'
 import TravelKiloCard from '@/components/offers/TravelKiloCard'
 import BoatShippingCard from '@/components/offers/BoatShippingCard'
@@ -88,10 +89,7 @@ export default function HomeClient({ locale }: { locale: string }) {
     return () => clearTimeout(timer)
   }, [bsSearchDraft])
 
-  const { data: countries } = useSWR<CountryDto[]>(
-    '/api/countries',
-    (url: string) => api.get<CountryDto[]>(url)
-  )
+  const { data: countries } = useCountries()
 
   // Compteurs globaux (toutes offres actives, sans filtres user) — pour les badges d'onglets.
   const { data: devisesTotal } = useSWR<PagedResult<OfferDto>>(

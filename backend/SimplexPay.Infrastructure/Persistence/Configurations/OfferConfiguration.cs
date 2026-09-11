@@ -46,5 +46,9 @@ public class OfferConfiguration : IEntityTypeConfiguration<Offer>
         builder.HasIndex(o => new { o.SellCurrencyCode, o.BuyCurrencyCode, o.Status });
         builder.HasIndex(o => new { o.Type, o.Status });
         builder.HasIndex(o => o.UserId);
+        // (Status, ExpiresAt) : WHERE Status IN (Open, PartiallyFilled) AND ExpiresAt > now() — chaque list query.
+        builder.HasIndex(o => new { o.Status, o.ExpiresAt });
+        // ORDER BY CreatedAt DESC (default sort "recent")
+        builder.HasIndex(o => o.CreatedAt);
     }
 }

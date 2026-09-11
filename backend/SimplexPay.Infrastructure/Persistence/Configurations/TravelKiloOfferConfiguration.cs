@@ -36,5 +36,7 @@ public class TravelKiloOfferConfiguration : IEntityTypeConfiguration<TravelKiloO
         builder.HasIndex(o => new { o.DepartureCountryCode, o.DestinationCountryCode, o.Status });
         builder.HasIndex(o => o.TravelDate);
         builder.HasIndex(o => o.UserId);
+        builder.HasIndex(o => new { o.Status, o.ExpiresAt });
+        builder.HasIndex(o => o.CreatedAt);
     }
 }

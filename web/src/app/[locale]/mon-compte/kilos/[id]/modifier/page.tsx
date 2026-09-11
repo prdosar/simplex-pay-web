@@ -8,7 +8,8 @@ import { useLocale } from 'next-intl'
 import { api, ApiError } from '@/lib/api'
 import { useAuth } from '@/context/AuthContext'
 import { UI_STATUSES, backendToUi, uiToBackend, uiStatusLabel, type UiStatus } from '@/lib/offerStatus'
-import type { TravelKiloOfferDto, CountryDto } from '@/types/api'
+import { useCountries } from '@/lib/useCountries'
+import type { TravelKiloOfferDto } from '@/types/api'
 
 const INPUT = 'w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0d9488]'
 const LABEL = 'block text-xs font-bold uppercase tracking-[0.06em] mb-2'
@@ -26,7 +27,7 @@ export default function EditTravelKiloPage({ params }: { params: Promise<{ id: s
   )
   const offer = myOffers?.items.find(o => o.id === id)
 
-  const { data: countries } = useSWR<CountryDto[]>('/api/countries', (url: string) => api.get<CountryDto[]>(url))
+  const { data: countries } = useCountries()
 
   const [availableKg, setAvailableKg] = useState('')
   const [pricePerKg, setPricePerKg] = useState('')

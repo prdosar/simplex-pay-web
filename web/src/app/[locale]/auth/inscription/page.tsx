@@ -4,11 +4,11 @@ import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
-import useSWR from 'swr'
 import { api } from '@/lib/api'
 import { useAuth } from '@/context/AuthContext'
 import { flagUrl } from '@/lib/utils'
-import type { AuthResponse, CountryDto } from '@/types/api'
+import { useCountries } from '@/lib/useCountries'
+import type { AuthResponse } from '@/types/api'
 
 export default function RegisterPage() {
   const t = useTranslations('auth.register')
@@ -17,10 +17,7 @@ export default function RegisterPage() {
   const router = useRouter()
   const { login } = useAuth()
 
-  const { data: countries } = useSWR<CountryDto[]>(
-    '/api/countries',
-    (url: string) => api.get<CountryDto[]>(url)
-  )
+  const { data: countries } = useCountries()
 
   const [form, setForm] = useState({
     firstName: '',

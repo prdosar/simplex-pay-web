@@ -23,5 +23,7 @@ public class ReviewConfiguration : IEntityTypeConfiguration<Review>
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(r => new { r.ReviewerId, r.ReviewedUserId }).IsUnique();
+        // Liste triée des avis reçus par un utilisateur (endpoint profil).
+        builder.HasIndex(r => new { r.ReviewedUserId, r.CreatedAt });
     }
 }
