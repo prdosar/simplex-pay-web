@@ -2,10 +2,10 @@
 
 import { createContext, useContext, useEffect, useState } from 'react'
 import { saveAuth, getUser, clearAuth, isAuthenticated as checkAuth } from '@/lib/auth'
-import type { AuthResponse, AdminUserDto } from '@/types/api'
+import type { AuthResponse, LoggedUserDto } from '@/types/api'
 
 interface AuthContextValue {
-  user: AdminUserDto | null
+  user: LoggedUserDto | null
   isAuthenticated: boolean
   login: (auth: AuthResponse) => void
   logout: () => void
@@ -19,7 +19,7 @@ const AuthContext = createContext<AuthContextValue>({
 })
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<AdminUserDto | null>(null)
+  const [user, setUser] = useState<LoggedUserDto | null>(null)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
 
   useEffect(() => {
@@ -30,7 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   function login(auth: AuthResponse) {
-    saveAuth(auth.token, auth.user)
+    saveAuth(auth.accessToken, auth.user)
     setUser(auth.user)
     setIsAuthenticated(true)
   }

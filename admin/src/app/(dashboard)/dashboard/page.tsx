@@ -21,7 +21,7 @@ export default function DashboardPage() {
   )
 
   const { data: recentOffers } = useSWR<PagedResult<AdminOfferDto>>(
-    '/api/offers?pageSize=5&pageNumber=1',
+    '/api/offers?pageSize=5&page=1',
     (url: string) => api.get<PagedResult<AdminOfferDto>>(url)
   )
 

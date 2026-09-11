@@ -10,7 +10,7 @@ export default function OffersPage() {
   const [statusFilter, setStatusFilter] = useState('')
 
   const { data, isLoading } = useSWR<PagedResult<AdminOfferDto>>(
-    `/api/offers?pageNumber=${page}&pageSize=20${statusFilter ? `&status=${statusFilter}` : ''}`,
+    `/api/offers?page=${page}&pageSize=20${statusFilter ? `&status=${statusFilter}` : ''}`,
     (url: string) => api.get<PagedResult<AdminOfferDto>>(url)
   )
 

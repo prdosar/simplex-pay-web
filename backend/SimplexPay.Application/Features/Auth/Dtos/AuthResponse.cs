@@ -20,7 +20,8 @@ public record UserDto(
     decimal Rating,
     int TransactionCount,
     string Status,
-    bool EmailVerified
+    bool EmailVerified,
+    bool IsAdmin
 )
 {
     public static UserDto From(User user) => new(
@@ -34,6 +35,7 @@ public record UserDto(
         user.Rating,
         user.TransactionCount,
         user.Status.ToString(),
-        user.EmailVerified
+        user.EmailVerified,
+        user.IsAdmin
     );
 }

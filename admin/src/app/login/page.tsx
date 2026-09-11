@@ -20,6 +20,11 @@ export default function LoginPage() {
     setLoading(true)
     try {
       const auth = await api.post<AuthResponse>('/api/auth/login', { email, password })
+      // Bloque l'accès aux non-admins (le backend renverrait de toute façon 403 sur les endpoints /api/admin/*).
+      if (!auth.user.isAdmin) {
+        setError('Accès réservé aux administrateurs.')
+        return
+      }
       login(auth)
       router.push('/dashboard')
     } catch {

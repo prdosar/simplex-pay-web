@@ -1,8 +1,28 @@
+// Le DTO renvoyé par /api/auth/login (backend AuthResponse + UserDto de Auth/Dtos/AuthResponse.cs).
 export interface AuthResponse {
-  token: string
-  user: AdminUserDto
+  accessToken: string
+  refreshToken: string
+  expiresAt: string
+  user: LoggedUserDto
 }
 
+// Représentation du user connecté (login). Distinct de AdminUserDto (liste enrichie).
+export interface LoggedUserDto {
+  id: string
+  firstName: string
+  lastName: string
+  email: string
+  phoneNumber: string
+  whatsAppNumber?: string
+  country: string
+  rating: number
+  transactionCount: number
+  status: string
+  emailVerified: boolean
+  isAdmin: boolean
+}
+
+// Ligne du tableau /api/admin/users (données enrichies pour l'admin).
 export interface AdminUserDto {
   id: string
   firstName: string
