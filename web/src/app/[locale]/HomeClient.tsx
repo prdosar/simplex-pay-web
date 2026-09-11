@@ -1,12 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import useSWR from 'swr'
+import useSWR, { mutate as globalMutate } from 'swr'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useAuth } from '@/context/AuthContext'
 import { api } from '@/lib/api'
 import { flagUrl } from '@/lib/utils'
+import { useMarketplaceRealtime } from '@/lib/useMarketplaceRealtime'
 import OfferCard from '@/components/offers/OfferCard'
 import TravelKiloCard from '@/components/offers/TravelKiloCard'
 import BoatShippingCard from '@/components/offers/BoatShippingCard'
@@ -277,6 +278,24 @@ export default function HomeClient({ locale }: { locale: string }) {
     window.addEventListener('resize', onResize)
     return () => window.removeEventListener('resize', onResize)
   }, [])
+
+  // Temps réel : à chaque nouvelle offre pushée par le hub, revalider les listes
+  // de la catégorie concernée + son compteur d'onglet (mais aussi les 2 autres
+  // compteurs si l'user a plusieurs onglets ouverts d'affilée).
+  useMarketplaceRealtime(({ category }) => {
+    // Compteurs (URL exacte que SWR utilise)
+    if (category === 'devises') globalMutate('/api/offers?pageSize=1')
+    if (category === 'kilos')   globalMutate('/api/travel-kilo?pageSize=1')
+    if (category === 'bateau')  globalMutate('/api/boat-shipping?pageSize=1')
+    // Listes actives : revalider toute clé qui commence par l'URL de base.
+    globalMutate((key: string | null | undefined) => {
+      if (typeof key !== 'string') return false
+      if (category === 'devises') return key.startsWith('/api/offers?')
+      if (category === 'kilos')   return key.startsWith('/api/travel-kilo?')
+      if (category === 'bateau')  return key.startsWith('/api/boat-shipping?')
+      return false
+    })
+  })
 
   // Bloc filtres confiance (certifié + min étoiles) — partagé par les 3 onglets.
   const trustFilterBlock = (

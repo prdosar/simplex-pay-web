@@ -43,7 +43,10 @@ public class CreateOfferCommandValidator : AbstractValidator<CreateOfferCommand>
     }
 }
 
-public class CreateOfferCommandHandler(IOfferRepository offerRepo, ICurrencyRepository currencyRepo)
+public class CreateOfferCommandHandler(
+    IOfferRepository offerRepo,
+    ICurrencyRepository currencyRepo,
+    IRealtimeNotifier realtime)
     : IRequestHandler<CreateOfferCommand, OfferDto>
 {
     private const string BuyCurrencyCode = "CAD";
@@ -102,6 +105,8 @@ public class CreateOfferCommandHandler(IOfferRepository offerRepo, ICurrencyRepo
 
         var saved = await offerRepo.GetByIdWithDetailsAsync(offer.Id, ct)
             ?? throw new NotFoundException("Offer", offer.Id);
+
+        await realtime.NotifyNewOfferAsync("devises", saved.Id, ct);
 
         return OfferDto.From(saved, isAuthenticated: true);
     }

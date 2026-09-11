@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using SimplexPay.API.Hubs;
 using SimplexPay.API.Middleware;
 using SimplexPay.Application;
 using SimplexPay.Application.Interfaces;
@@ -72,6 +73,7 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddSignalR();
+builder.Services.AddSingleton<IRealtimeNotifier, SignalRRealtimeNotifier>();
 
 var app = builder.Build();
 
@@ -98,5 +100,6 @@ app.UseCors("AllowFrontends");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHub<MarketplaceHub>("/hubs/marketplace");
 
 app.Run();

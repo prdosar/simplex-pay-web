@@ -35,7 +35,7 @@ public class CreateBoatShippingOfferCommandValidator : AbstractValidator<CreateB
     }
 }
 
-public class CreateBoatShippingOfferCommandHandler(IBoatShippingOfferRepository repo)
+public class CreateBoatShippingOfferCommandHandler(IBoatShippingOfferRepository repo, IRealtimeNotifier realtime)
     : IRequestHandler<CreateBoatShippingOfferCommand, BoatShippingOfferDto>
 {
     public async Task<BoatShippingOfferDto> Handle(CreateBoatShippingOfferCommand req, CancellationToken ct)
@@ -51,6 +51,8 @@ public class CreateBoatShippingOfferCommandHandler(IBoatShippingOfferRepository 
 
         var saved = await repo.GetByIdWithDetailsAsync(offer.Id, ct)
             ?? throw new NotFoundException("BoatShippingOffer", offer.Id);
+
+        await realtime.NotifyNewOfferAsync("bateau", saved.Id, ct);
 
         return BoatShippingOfferDto.From(saved, isAuthenticated: true);
     }

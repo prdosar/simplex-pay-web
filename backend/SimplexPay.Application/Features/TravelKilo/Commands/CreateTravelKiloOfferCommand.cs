@@ -35,7 +35,7 @@ public class CreateTravelKiloOfferCommandValidator : AbstractValidator<CreateTra
     }
 }
 
-public class CreateTravelKiloOfferCommandHandler(ITravelKiloOfferRepository repo)
+public class CreateTravelKiloOfferCommandHandler(ITravelKiloOfferRepository repo, IRealtimeNotifier realtime)
     : IRequestHandler<CreateTravelKiloOfferCommand, TravelKiloOfferDto>
 {
     public async Task<TravelKiloOfferDto> Handle(CreateTravelKiloOfferCommand req, CancellationToken ct)
@@ -51,6 +51,8 @@ public class CreateTravelKiloOfferCommandHandler(ITravelKiloOfferRepository repo
 
         var saved = await repo.GetByIdWithDetailsAsync(offer.Id, ct)
             ?? throw new NotFoundException("TravelKiloOffer", offer.Id);
+
+        await realtime.NotifyNewOfferAsync("kilos", saved.Id, ct);
 
         return TravelKiloOfferDto.From(saved, isAuthenticated: true);
     }
