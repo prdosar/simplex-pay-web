@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using SimplexPay.API.Middleware;
 using SimplexPay.Application;
+using SimplexPay.Application.Interfaces;
 using SimplexPay.Infrastructure;
 using SimplexPay.Infrastructure.Persistence;
 using System.Text;
@@ -79,6 +80,10 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await db.Database.MigrateAsync();
+
+    var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
+    var seedLogger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("DbSeeder");
+    await DbSeeder.SeedAsync(db, hasher, seedLogger);
 }
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();

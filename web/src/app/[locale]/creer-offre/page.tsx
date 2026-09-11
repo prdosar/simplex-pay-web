@@ -89,7 +89,7 @@ export default function CreateOfferPage() {
   // Défaut : pays de l'user si africain, sinon Togo (1 seul coché au démarrage).
   useEffect(() => {
     if (sellCountryCodes.length || !africanCountries.length) return
-    const userAfrican = user?.country && africanCountries.find(c => c.code === user.country)
+    const userAfrican = user?.country ? africanCountries.find(c => c.code === user.country) : undefined
     const chosen = userAfrican?.code
       ?? africanCountries.find(c => c.code === DEFAULT_AFRICAN_COUNTRY)?.code
       ?? africanCountries[0]?.code
