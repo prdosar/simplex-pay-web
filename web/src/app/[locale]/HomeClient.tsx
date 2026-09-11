@@ -10,6 +10,7 @@ import { flagUrl } from '@/lib/utils'
 import OfferCard from '@/components/offers/OfferCard'
 import TravelKiloCard from '@/components/offers/TravelKiloCard'
 import BoatShippingCard from '@/components/offers/BoatShippingCard'
+import CountrySelect from '@/components/ui/CountrySelect'
 import type { PagedResult, OfferDto, CountryDto, PaymentMethodFacet, TravelKiloOfferDto, BoatShippingOfferDto } from '@/types/api'
 
 type Tab = 'devises' | 'kilos' | 'bateau'
@@ -537,26 +538,15 @@ export default function HomeClient({ locale }: { locale: string }) {
                       <label className="block text-[11px] font-bold uppercase tracking-[0.06em] mb-2" style={{ color: '#64748b' }}>
                         {t('offers.countryLabel')}
                       </label>
-                      <div className="relative">
-                        {selectedCountry && (
-                          <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 z-10">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={flagUrl(selectedCountry.code)} alt={selectedCountry.code} className="w-6 h-4 rounded-sm object-cover" />
-                          </div>
-                        )}
-                        <select
-                          value={sellCountry}
-                          onChange={e => handleCountryChange(e.target.value)}
-                          className="w-full border border-[#e2e8f0] rounded-lg py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#0d9488]"
-                          style={{ paddingLeft: selectedCountry ? '40px' : '12px', paddingRight: '10px' }}
-                        >
-                          {sellCountries.map(c => (
-                            <option key={c.code} value={c.code}>
-                              {locale === 'fr' ? c.nameFr : c.name} ({c.currencyCode})
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+                      <CountrySelect
+                        value={sellCountry}
+                        onChange={handleCountryChange}
+                        countries={sellCountries}
+                        locale={locale}
+                        allowEmpty={false}
+                        showCurrencyCode
+                        placeholder={t('offers.selectCountry')}
+                      />
                     </div>
 
                     <div>
@@ -744,50 +734,26 @@ export default function HomeClient({ locale }: { locale: string }) {
                       <label className="block text-[11px] font-bold uppercase tracking-[0.06em] mb-2" style={{ color: '#64748b' }}>
                         {t('travelKilo.departureLabel')}
                       </label>
-                      <div className="relative">
-                        {tkDeptCC && (
-                          <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 z-10">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={flagUrl(tkDeptCC)} alt={tkDeptCC} className="w-6 h-4 rounded-sm object-cover" />
-                          </div>
-                        )}
-                        <select
-                          value={tkDeptCC}
-                          onChange={e => { setTkDeptCC(e.target.value); setTkPage(1) }}
-                          className="w-full border border-[#e2e8f0] rounded-lg py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#0d9488]"
-                          style={{ paddingLeft: tkDeptCC ? '40px' : '12px', paddingRight: '10px' }}
-                        >
-                          <option value="">{t('travelKilo.allCountries')}</option>
-                          {countries?.map(c => (
-                            <option key={c.code} value={c.code}>{locale === 'fr' ? c.nameFr : c.name}</option>
-                          ))}
-                        </select>
-                      </div>
+                      <CountrySelect
+                        value={tkDeptCC}
+                        onChange={code => { setTkDeptCC(code); setTkPage(1) }}
+                        countries={countries ?? []}
+                        locale={locale}
+                        emptyLabel={t('travelKilo.allCountries')}
+                      />
                     </div>
 
                     <div>
                       <label className="block text-[11px] font-bold uppercase tracking-[0.06em] mb-2" style={{ color: '#64748b' }}>
                         {t('travelKilo.destinationLabel')}
                       </label>
-                      <div className="relative">
-                        {tkDestCC && (
-                          <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 z-10">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={flagUrl(tkDestCC)} alt={tkDestCC} className="w-6 h-4 rounded-sm object-cover" />
-                          </div>
-                        )}
-                        <select
-                          value={tkDestCC}
-                          onChange={e => { setTkDestCC(e.target.value); setTkPage(1) }}
-                          className="w-full border border-[#e2e8f0] rounded-lg py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#0d9488]"
-                          style={{ paddingLeft: tkDestCC ? '40px' : '12px', paddingRight: '10px' }}
-                        >
-                          <option value="">{t('travelKilo.allCountries')}</option>
-                          {countries?.map(c => (
-                            <option key={c.code} value={c.code}>{locale === 'fr' ? c.nameFr : c.name}</option>
-                          ))}
-                        </select>
-                      </div>
+                      <CountrySelect
+                        value={tkDestCC}
+                        onChange={code => { setTkDestCC(code); setTkPage(1) }}
+                        countries={countries ?? []}
+                        locale={locale}
+                        emptyLabel={t('travelKilo.allCountries')}
+                      />
                     </div>
 
                     <div>
@@ -922,50 +888,26 @@ export default function HomeClient({ locale }: { locale: string }) {
                       <label className="block text-[11px] font-bold uppercase tracking-[0.06em] mb-2" style={{ color: '#64748b' }}>
                         {t('boatShipping.departureLabel')}
                       </label>
-                      <div className="relative">
-                        {bsDeptCC && (
-                          <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 z-10">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={flagUrl(bsDeptCC)} alt={bsDeptCC} className="w-6 h-4 rounded-sm object-cover" />
-                          </div>
-                        )}
-                        <select
-                          value={bsDeptCC}
-                          onChange={e => { setBsDeptCC(e.target.value); setBsPage(1) }}
-                          className="w-full border border-[#e2e8f0] rounded-lg py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#0d9488]"
-                          style={{ paddingLeft: bsDeptCC ? '40px' : '12px', paddingRight: '10px' }}
-                        >
-                          <option value="">{t('boatShipping.allCountries')}</option>
-                          {countries?.map(c => (
-                            <option key={c.code} value={c.code}>{locale === 'fr' ? c.nameFr : c.name}</option>
-                          ))}
-                        </select>
-                      </div>
+                      <CountrySelect
+                        value={bsDeptCC}
+                        onChange={code => { setBsDeptCC(code); setBsPage(1) }}
+                        countries={countries ?? []}
+                        locale={locale}
+                        emptyLabel={t('boatShipping.allCountries')}
+                      />
                     </div>
 
                     <div>
                       <label className="block text-[11px] font-bold uppercase tracking-[0.06em] mb-2" style={{ color: '#64748b' }}>
                         {t('boatShipping.destinationLabel')}
                       </label>
-                      <div className="relative">
-                        {bsDestCC && (
-                          <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 z-10">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={flagUrl(bsDestCC)} alt={bsDestCC} className="w-6 h-4 rounded-sm object-cover" />
-                          </div>
-                        )}
-                        <select
-                          value={bsDestCC}
-                          onChange={e => { setBsDestCC(e.target.value); setBsPage(1) }}
-                          className="w-full border border-[#e2e8f0] rounded-lg py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#0d9488]"
-                          style={{ paddingLeft: bsDestCC ? '40px' : '12px', paddingRight: '10px' }}
-                        >
-                          <option value="">{t('boatShipping.allCountries')}</option>
-                          {countries?.map(c => (
-                            <option key={c.code} value={c.code}>{locale === 'fr' ? c.nameFr : c.name}</option>
-                          ))}
-                        </select>
-                      </div>
+                      <CountrySelect
+                        value={bsDestCC}
+                        onChange={code => { setBsDestCC(code); setBsPage(1) }}
+                        countries={countries ?? []}
+                        locale={locale}
+                        emptyLabel={t('boatShipping.allCountries')}
+                      />
                     </div>
 
                     <div>
