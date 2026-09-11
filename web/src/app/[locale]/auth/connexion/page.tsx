@@ -88,7 +88,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Mini demo card */}
+        {/* Mini demo card — Kilos Voyage (avion) */}
         <div
           className="rounded-[16px] overflow-hidden border"
           style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.05)' }}
@@ -97,21 +97,34 @@ export default function LoginPage() {
           <div className="px-5 py-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-1.5 font-bold text-sm text-white">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={flagUrl('fr')} alt="FR" className="w-[18px] h-[13px] rounded-sm object-cover" />
-                <span>EUR</span>
-                <span style={{ color: '#475569' }}>→</span>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={flagUrl('sn')} alt="SN" className="w-[18px] h-[13px] rounded-sm object-cover" />
-                <span>XOF</span>
+                <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" style={{ color: '#0d9488' }} aria-hidden>
+                  <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
+                </svg>
+                <span>{locale === 'fr' ? 'Kilos voyage' : 'Travel kilos'}</span>
               </div>
               <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ color: '#0d9488', background: 'rgba(13,148,136,0.15)' }}>
-                Active
+                {locale === 'fr' ? 'Actif' : 'Active'}
               </span>
             </div>
-            <p className="text-[10px] uppercase tracking-[0.06em] mb-0.5" style={{ color: '#475569' }}>Taux</p>
+
+            <div className="flex items-center gap-2 text-sm text-white mb-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={flagUrl('fr')} alt="FR" className="w-[18px] h-[13px] rounded-sm object-cover" />
+              <span className="font-semibold">Paris</span>
+              <span style={{ color: '#475569' }}>→</span>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={flagUrl('sn')} alt="SN" className="w-[18px] h-[13px] rounded-sm object-cover" />
+              <span className="font-semibold">Dakar</span>
+            </div>
+
+            <p className="text-[10px] uppercase tracking-[0.06em] mb-0.5" style={{ color: '#475569' }}>
+              {locale === 'fr' ? 'Disponible' : 'Available'}
+            </p>
             <p className="text-[22px] font-extrabold" style={{ color: '#0d9488' }}>
-              655,96 <span className="text-xs font-medium" style={{ color: '#475569' }}>XOF/EUR</span>
+              12 kg <span className="text-xs font-medium" style={{ color: '#94a3b8' }}>· 15 €/kg</span>
+            </p>
+            <p className="text-[11px] mt-1" style={{ color: '#94a3b8' }}>
+              {locale === 'fr' ? 'Départ 20 sept.' : 'Departs Sept 20'}
             </p>
           </div>
         </div>
