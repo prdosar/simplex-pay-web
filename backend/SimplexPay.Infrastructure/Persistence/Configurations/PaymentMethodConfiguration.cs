@@ -30,6 +30,8 @@ public class PaymentMethodConfiguration : IEntityTypeConfiguration<PaymentMethod
     public static readonly Guid MtnGhId          = new("10000000-0000-0000-0000-000000000018");
     public static readonly Guid VodafoneGhId     = new("10000000-0000-0000-0000-000000000019");
     public static readonly Guid AirtelGhId       = new("10000000-0000-0000-0000-000000000020");
+    // Togo
+    public static readonly Guid TMoneyTgId       = new("10000000-0000-0000-0000-000000000021");
 
     public void Configure(EntityTypeBuilder<PaymentMethod> builder)
     {
@@ -59,7 +61,8 @@ public class PaymentMethodConfiguration : IEntityTypeConfiguration<PaymentMethod
             PM(BankTransferNgId, "Virement bancaire NG",  PaymentMethodType.BankTransfer,  "Virement bancaire Nigeria (GTB, Access, Zenith…)"),
             PM(MtnGhId,          "MTN MoMo GH",           PaymentMethodType.MobileMoney,   "MTN Mobile Money Ghana"),
             PM(VodafoneGhId,     "Vodafone Cash GH",      PaymentMethodType.MobileMoney,   "Vodafone Cash Ghana"),
-            PM(AirtelGhId,       "AirtelTigo Money GH",   PaymentMethodType.MobileMoney,   "AirtelTigo Money Ghana")
+            PM(AirtelGhId,       "AirtelTigo Money GH",   PaymentMethodType.MobileMoney,   "AirtelTigo Money Ghana"),
+            PM(TMoneyTgId,       "T-Money (Yas) TG",      PaymentMethodType.MobileMoney,   "T-Money / Yas — Togocom (Togo)")
         );
     }
 

@@ -62,7 +62,8 @@ public class CountryPaymentMethodConfiguration : IEntityTypeConfiguration<Countr
 
             // Togo (XOF) — Wave n'opère pas au Togo
             S("TG", CashId,           true),
-            S("TG", MoovCiId,         true),
+            S("TG", TMoneyTgId,       true),
+            S("TG", MoovCiId,         false),
 
             // Guinée-Bissau (XOF)
             S("GW", CashId,           true),
