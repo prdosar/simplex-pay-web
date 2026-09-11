@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SimplexPay.Application.Features.Admin.Commands;
 using SimplexPay.Application.Features.Admin.Queries;
 
 namespace SimplexPay.API.Controllers;
@@ -32,4 +33,20 @@ public class AdminController(IMediator mediator) : ControllerBase
             totalPages,
         });
     }
+
+    [HttpPatch("users/{userId:guid}/certify")]
+    public async Task<IActionResult> CertifyUser(Guid userId, [FromBody] CertifyRequest req, CancellationToken ct)
+    {
+        try
+        {
+            await mediator.Send(new CertifyUserCommand(userId, req.IsCertified), ct);
+            return NoContent();
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+    }
 }
+
+public record CertifyRequest(bool IsCertified);

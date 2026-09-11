@@ -22,10 +22,6 @@ public class Offer : BaseEntity
     public string BuyCountryCode { get; private set; } = default!;
     public Country BuyCountry { get; private set; } = default!;
 
-    // Pays côté devise-produit (ex: SN, CM, NG, GH)
-    public string SellCountryCode { get; private set; } = default!;
-    public Country SellCountry { get; private set; } = default!;
-
     // Montant en devise-produit (XOF, XAF, etc.)
     public decimal Amount { get; private set; }
     public decimal AmountFilled { get; private set; } = 0;
@@ -41,9 +37,13 @@ public class Offer : BaseEntity
     public OfferStatus Status { get; private set; } = OfferStatus.Open;
     public DateTime ExpiresAt { get; private set; }
 
+    private readonly List<OfferCountry> _countries = [];
     private readonly List<OfferPaymentMethod> _paymentMethods = [];
     private readonly List<Transaction> _transactions = [];
 
+    // Pays côté devise-produit — plusieurs autorisés (intégrations UEMOA/CEMAC : XOF partagé par
+    // 8 pays, XAF par 6). Tous doivent partager SellCurrencyCode.
+    public IReadOnlyCollection<OfferCountry> Countries => _countries.AsReadOnly();
     public IReadOnlyCollection<OfferPaymentMethod> PaymentMethods => _paymentMethods.AsReadOnly();
     public IReadOnlyCollection<Transaction> Transactions => _transactions.AsReadOnly();
 
@@ -57,7 +57,7 @@ public class Offer : BaseEntity
         OfferType type,
         string sellCurrencyCode,
         string buyCurrencyCode,
-        string sellCountryCode,
+        IEnumerable<string> sellCountryCodes,
         string buyCountryCode,
         decimal amount,
         OfferRateMode rateMode,
@@ -75,13 +75,19 @@ public class Offer : BaseEntity
             throw new ArgumentException("Le minimum ne peut pas dépasser le maximum.");
         if (minAmount > amount) throw new ArgumentException("Le minimum ne peut pas dépasser le montant total.");
 
-        return new Offer
+        var codes = sellCountryCodes?
+            .Where(c => !string.IsNullOrWhiteSpace(c))
+            .Select(c => c.ToUpperInvariant())
+            .Distinct()
+            .ToList() ?? [];
+        if (codes.Count == 0) throw new ArgumentException("Au moins un pays de vente est requis.");
+
+        var offer = new Offer
         {
             UserId = userId,
             Type = type,
             SellCurrencyCode = sellCurrencyCode.ToUpperInvariant(),
             BuyCurrencyCode = buyCurrencyCode.ToUpperInvariant(),
-            SellCountryCode = sellCountryCode.ToUpperInvariant(),
             BuyCountryCode = buyCountryCode.ToUpperInvariant(),
             Amount = amount,
             RateMode = rateMode,
@@ -91,6 +97,9 @@ public class Offer : BaseEntity
             Notes = notes,
             ExpiresAt = DateTime.UtcNow.AddHours(expiryHours)
         };
+        foreach (var code in codes)
+            offer._countries.Add(OfferCountry.Create(offer.Id, code));
+        return offer;
     }
 
     public void AddPaymentMethod(Guid paymentMethodId, OfferSide side)
@@ -116,4 +125,58 @@ public class Offer : BaseEntity
         Status = OfferStatus.Cancelled;
         MarkUpdated();
     }
+
+    /// <summary>Mise à jour éditoriale par le propriétaire.
+    /// Immuables : devises (recréer une offre pour changer). Pays et modes de paiement modifiables.</summary>
+    public void Update(
+        decimal amount,
+        decimal remainingAmount,
+        OfferRateMode rateMode,
+        decimal? rate,
+        decimal minAmount,
+        decimal? maxAmount,
+        string? notes,
+        DateTime expiresAt,
+        OfferStatus status)
+    {
+        if (amount <= 0) throw new ArgumentException("Le montant doit être positif.");
+        if (remainingAmount < 0 || remainingAmount > amount)
+            throw new ArgumentException("Le montant restant doit être entre 0 et le montant total.");
+        if (rateMode == OfferRateMode.Fixed && (rate is null || rate <= 0))
+            throw new ArgumentException("Un taux positif est requis en mode fixe.");
+        if (minAmount <= 0) throw new ArgumentException("Le montant minimum doit être positif.");
+        if (maxAmount is not null && minAmount > maxAmount)
+            throw new ArgumentException("Le minimum ne peut pas dépasser le maximum.");
+        if (minAmount > amount) throw new ArgumentException("Le minimum ne peut pas dépasser le montant total.");
+
+        Amount = amount;
+        AmountFilled = amount - remainingAmount;
+        RateMode = rateMode;
+        Rate = rateMode == OfferRateMode.Fixed ? rate : null;
+        MinAmount = minAmount;
+        MaxAmount = maxAmount;
+        Notes = notes;
+        ExpiresAt = expiresAt;
+        Status = status;
+        MarkUpdated();
+    }
+
+    /// <summary>Remplace intégralement la liste des pays de vente. Tous doivent partager SellCurrencyCode
+    /// (validation à la charge du handler qui a accès aux entités Country).</summary>
+    public void SetCountries(IEnumerable<string> countryCodes)
+    {
+        var codes = countryCodes?
+            .Where(c => !string.IsNullOrWhiteSpace(c))
+            .Select(c => c.ToUpperInvariant())
+            .Distinct()
+            .ToList() ?? [];
+        if (codes.Count == 0) throw new ArgumentException("Au moins un pays de vente est requis.");
+        _countries.Clear();
+        foreach (var code in codes)
+            _countries.Add(OfferCountry.Create(Id, code));
+    }
+
+    /// <summary>Remplace les modes de paiement (côté vendeur uniquement).
+    /// Appelé par le handler qui a une visibilité sur l'ID de la relation.</summary>
+    public void ClearPaymentMethods() => _paymentMethods.Clear();
 }

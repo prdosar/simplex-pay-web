@@ -9,12 +9,11 @@ using SimplexPay.Domain.Enums;
 namespace SimplexPay.Application.Features.Offers.Commands;
 
 public record CreateOfferCommand(
-    Guid UserId,              // injecté depuis le JWT dans le controller
-    string SellCurrencyCode,  // XOF, XAF, NGN, GHS…
-    string SellCountryCode,
+    Guid UserId,                       // injecté depuis le JWT dans le controller
+    IList<string> SellCountryCodes,    // au moins 1. Tous doivent partager la même devise (UEMOA/CEMAC).
     decimal Amount,
-    string RateMode,          // "Fixed" | "GoogleDaily" | "XeDaily"
-    decimal? Rate,            // requis uniquement si RateMode == Fixed
+    string RateMode,                   // "Fixed" | "GoogleDaily" | "XeDaily"
+    decimal? Rate,                     // requis uniquement si RateMode == Fixed
     decimal MinAmount,
     string? Notes,
     int ExpiryHours = 24,
@@ -26,8 +25,11 @@ public class CreateOfferCommandValidator : AbstractValidator<CreateOfferCommand>
     public CreateOfferCommandValidator()
     {
         RuleFor(x => x.UserId).NotEmpty();
-        RuleFor(x => x.SellCurrencyCode).NotEmpty().MaximumLength(5);
-        RuleFor(x => x.SellCountryCode).NotEmpty().Length(2, 3);
+        RuleFor(x => x.SellCountryCodes)
+            .NotNull()
+            .Must(c => c != null && c.Count > 0)
+            .WithMessage("Sélectionne au moins un pays.");
+        RuleForEach(x => x.SellCountryCodes).NotEmpty().Length(2, 3);
         RuleFor(x => x.Amount).GreaterThan(0);
         RuleFor(x => x.RateMode).NotEmpty()
             .Must(m => m == "Fixed" || m == "GoogleDaily" || m == "XeDaily")
@@ -41,7 +43,8 @@ public class CreateOfferCommandValidator : AbstractValidator<CreateOfferCommand>
     }
 }
 
-public class CreateOfferCommandHandler(IOfferRepository offerRepo) : IRequestHandler<CreateOfferCommand, OfferDto>
+public class CreateOfferCommandHandler(IOfferRepository offerRepo, ICurrencyRepository currencyRepo)
+    : IRequestHandler<CreateOfferCommand, OfferDto>
 {
     private const string BuyCurrencyCode = "CAD";
     private const string BuyCountryCode = "CA";
@@ -51,12 +54,33 @@ public class CreateOfferCommandHandler(IOfferRepository offerRepo) : IRequestHan
         if (!Enum.TryParse<OfferRateMode>(req.RateMode, out var rateMode))
             throw new ConflictException("RateMode d'offre invalide.");
 
+        var codes = req.SellCountryCodes
+            .Where(c => !string.IsNullOrWhiteSpace(c))
+            .Select(c => c.ToUpperInvariant())
+            .Distinct()
+            .ToList();
+        if (codes.Count == 0)
+            throw new ConflictException("Sélectionne au moins un pays.");
+
+        // On charge tous les pays (petite table), filtre par codes, vérifie qu'ils partagent la devise.
+        var allCountries = await currencyRepo.GetCountriesAsync(null, ct);
+        var selected = allCountries.Where(c => codes.Contains(c.Code)).ToList();
+        if (selected.Count != codes.Count)
+        {
+            var missing = codes.Except(selected.Select(c => c.Code));
+            throw new ConflictException($"Pays inconnu(s) : {string.Join(", ", missing)}.");
+        }
+        var currencies = selected.Select(c => c.CurrencyCode).Distinct().ToList();
+        if (currencies.Count > 1)
+            throw new ConflictException($"Les pays sélectionnés doivent partager la même devise (trouvé : {string.Join(", ", currencies)}).");
+        var sellCurrencyCode = currencies[0];
+
         var offer = Offer.Create(
             userId: req.UserId,
             type: OfferType.Sell,
-            sellCurrencyCode: req.SellCurrencyCode,
+            sellCurrencyCode: sellCurrencyCode,
             buyCurrencyCode: BuyCurrencyCode,
-            sellCountryCode: req.SellCountryCode,
+            sellCountryCodes: codes,
             buyCountryCode: BuyCountryCode,
             amount: req.Amount,
             rateMode: rateMode,

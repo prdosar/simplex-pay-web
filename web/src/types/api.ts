@@ -31,9 +31,33 @@ export interface OfferCreatorDto {
   firstName: string
   lastName?: string
   rating: number
+  reviewCount: number
   transactionCount: number
+  isCertified: boolean
   phone?: string
   whatsApp?: string
+}
+
+export interface UserProfileDto {
+  id: string
+  firstName: string
+  lastName?: string
+  country: string
+  isCertified: boolean
+  rating: number
+  reviewCount: number
+  transactionCount: number
+  memberSince: string
+}
+
+export interface ReviewDto {
+  id: string
+  reviewerId: string
+  reviewerFirstName: string
+  rating: number
+  comment?: string
+  createdAt: string
+  updatedAt?: string
 }
 
 export interface OfferPaymentMethodDto {
@@ -51,8 +75,8 @@ export interface OfferDto {
   sellCurrencySymbol: string
   buyCurrency: string
   buyCurrencySymbol: string
-  sellCountry: string
-  sellCountryFlag: string
+  /** Pays côté devise-produit — plusieurs (intégrations UEMOA/CEMAC). Tous partagent sellCurrency. */
+  sellCountries: string[]
   buyCountry: string
   buyCountryFlag: string
   amount: number
@@ -84,7 +108,9 @@ export interface TravelKiloOfferDto {
   creatorId: string
   creatorFirstName: string
   creatorRating: number
+  creatorReviewCount: number
   creatorTransactionCount: number
+  creatorIsCertified: boolean
   creatorPhone?: string
   creatorWhatsApp?: string
   availableKg: number
@@ -107,7 +133,9 @@ export interface BoatShippingOfferDto {
   creatorId: string
   creatorFirstName: string
   creatorRating: number
+  creatorReviewCount: number
   creatorTransactionCount: number
+  creatorIsCertified: boolean
   creatorPhone?: string
   creatorWhatsApp?: string
   availableLbs: number

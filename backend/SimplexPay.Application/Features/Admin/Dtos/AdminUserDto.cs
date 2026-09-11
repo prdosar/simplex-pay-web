@@ -11,7 +11,9 @@ public record AdminUserDto(
     string? WhatsAppNumber,
     string Country,
     string Status,
+    bool IsCertified,
     decimal Rating,
+    int ReviewCount,
     int TransactionCount,
     DateTime CreatedAt
 )
@@ -19,7 +21,7 @@ public record AdminUserDto(
     public static AdminUserDto From(User u) => new(
         u.Id, u.FirstName, u.LastName, u.Email,
         u.PhoneNumber, u.WhatsAppNumber, u.Country,
-        u.Status.ToString(), u.Rating, u.TransactionCount, u.CreatedAt);
+        u.Status.ToString(), u.IsCertified, u.Rating, u.ReviewCount, u.TransactionCount, u.CreatedAt);
 }
 
 public record AdminStatsDto(

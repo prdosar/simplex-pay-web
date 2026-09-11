@@ -16,7 +16,8 @@ public class OfferRepository(AppDbContext db) : IOfferRepository
           .Include(o => o.User)
           .Include(o => o.SellCurrency)
           .Include(o => o.BuyCurrency)
-          .Include(o => o.SellCountry)
+          .Include(o => o.Countries)
+              .ThenInclude(oc => oc.Country)
           .Include(o => o.BuyCountry)
           .Include(o => o.PaymentMethods)
               .ThenInclude(pm => pm.PaymentMethod)
@@ -28,7 +29,8 @@ public class OfferRepository(AppDbContext db) : IOfferRepository
             .Include(o => o.User)
             .Include(o => o.SellCurrency)
             .Include(o => o.BuyCurrency)
-            .Include(o => o.SellCountry)
+            .Include(o => o.Countries)
+                .ThenInclude(oc => oc.Country)
             .Include(o => o.BuyCountry)
             .Include(o => o.PaymentMethods)
                 .ThenInclude(pm => pm.PaymentMethod)
@@ -70,9 +72,11 @@ public class OfferRepository(AppDbContext db) : IOfferRepository
     public async Task<(IList<Offer> Items, int Total)> GetByUserIdPagedAsync(Guid userId, int page, int pageSize, CancellationToken ct)
     {
         var query = db.Offers
+            .Include(o => o.User)
             .Include(o => o.SellCurrency)
             .Include(o => o.BuyCurrency)
-            .Include(o => o.SellCountry)
+            .Include(o => o.Countries)
+                .ThenInclude(oc => oc.Country)
             .Include(o => o.BuyCountry)
             .Include(o => o.PaymentMethods)
                 .ThenInclude(pm => pm.PaymentMethod)
@@ -89,7 +93,7 @@ public class OfferRepository(AppDbContext db) : IOfferRepository
         var now = DateTime.UtcNow;
         var weekAgo = now.AddDays(-7);
         var total = await db.Offers.CountAsync(ct);
-        var active = await db.Offers.CountAsync(o => o.Status == OfferStatus.Open && o.ExpiresAt > now, ct);
+        var active = await db.Offers.CountAsync(o => (o.Status == OfferStatus.Open || o.Status == OfferStatus.PartiallyFilled) && o.ExpiresAt > now, ct);
         var newThisWeek = await db.Offers.CountAsync(o => o.CreatedAt >= weekAgo, ct);
         return (total, active, newThisWeek);
     }
@@ -111,13 +115,21 @@ public class OfferRepository(AppDbContext db) : IOfferRepository
         if (!string.IsNullOrWhiteSpace(filter.OfferType) && Enum.TryParse<OfferType>(filter.OfferType, out var offerType))
             query = query.Where(o => o.Type == offerType);
 
+        // Multi-pays : l'offre est visible sous n'importe lequel des pays sélectionnés (UEMOA/CEMAC).
         if (!string.IsNullOrWhiteSpace(filter.SellCountryCode))
-            query = query.Where(o => o.SellCountryCode == filter.SellCountryCode.ToUpperInvariant());
+        {
+            var sellCode = filter.SellCountryCode.ToUpperInvariant();
+            query = query.Where(o => o.Countries.Any(oc => oc.CountryCode == sellCode));
+        }
 
         if (!string.IsNullOrWhiteSpace(filter.BuyCountryCode))
             query = query.Where(o => o.BuyCountryCode == filter.BuyCountryCode.ToUpperInvariant());
 
-        if (!string.IsNullOrWhiteSpace(filter.Status) && Enum.TryParse<OfferStatus>(filter.Status, out var status))
+        // "Open" côté public = statut visible utilisateur "Active" ou "Partiel" (offre encore disponible).
+        // Une offre partielle reste vendable pour son montant restant.
+        if (filter.Status == "Open")
+            query = query.Where(o => o.Status == OfferStatus.Open || o.Status == OfferStatus.PartiallyFilled);
+        else if (!string.IsNullOrWhiteSpace(filter.Status) && Enum.TryParse<OfferStatus>(filter.Status, out var status))
             query = query.Where(o => o.Status == status);
 
         if (!string.IsNullOrWhiteSpace(filter.Search))
@@ -140,6 +152,12 @@ public class OfferRepository(AppDbContext db) : IOfferRepository
 
         if (includePaymentMethodFilter && filter.PaymentMethodIds is { Count: > 0 } ids)
             query = query.Where(o => o.PaymentMethods.Any(pm => ids.Contains(pm.PaymentMethodId)));
+
+        if (filter.VerifiedOnly)
+            query = query.Where(o => o.User.IsCertified);
+
+        if (filter.MinRating.HasValue)
+            query = query.Where(o => o.User.Rating >= filter.MinRating.Value);
 
         query = query.Where(o => o.ExpiresAt > DateTime.UtcNow);
 

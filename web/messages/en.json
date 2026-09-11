@@ -17,9 +17,12 @@
       "ctaView": "Browse offers",
       "ctaPost": "Post an offer",
       "trust1": "Free sign up",
-      "trust2": "Direct payment, no hidden fees",
       "trust3": "Verified profiles and reviews",
       "cta": "Browse offers"
+    },
+    "disclaimer": {
+      "title": "SimplexPay is a matchmaking platform",
+      "body": "No transaction happens directly on the site. Exchanges take place between individuals, outside the platform. SimplexPay holds no funds and is not responsible for offers posted, their execution, or the users who publish them. Always check identity and reviews before any payment."
     },
     "tabs": {
       "devises": "Currencies",
@@ -28,6 +31,14 @@
     },
     "currencies": {
       "title": "Available currencies"
+    },
+    "trust": {
+      "label": "Trust",
+      "verifiedOnly": "Certified users only",
+      "minRating": "Minimum rating",
+      "minRatingAria": "Filter from {n} stars",
+      "minRatingValue": "At least {n} ★",
+      "noRatingFilter": "All ratings"
     },
     "offers": {
       "sectionTitle": "Offers right now",
@@ -54,6 +65,12 @@
       "departureLabel": "Departure country",
       "destinationLabel": "Destination country",
       "allCountries": "All countries",
+      "sortLabel": "Sort by",
+      "sortRecent": "Most recent",
+      "sortPriceAsc": "Price / kg ascending ↑",
+      "sortPriceDesc": "Price / kg descending ↓",
+      "sortKgDesc": "Most kilos available",
+      "kgLabel": "Available kilos",
       "cardDate": "Travel date",
       "cardKg": "Available kilos",
       "cardPrice": "Price / kg",
@@ -68,6 +85,12 @@
       "departureLabel": "Departure country",
       "destinationLabel": "Destination country",
       "allCountries": "All countries",
+      "sortLabel": "Sort by",
+      "sortRecent": "Most recent",
+      "sortPriceAsc": "Price / lb ascending ↑",
+      "sortPriceDesc": "Price / lb descending ↓",
+      "sortLbsDesc": "Most lbs available",
+      "lbsLabel": "Available lbs",
       "cardDate": "Ship departure date",
       "cardLbs": "Available lbs",
       "cardPrice": "Price / lb",
@@ -108,6 +131,7 @@
     "terms": "Legal notices",
     "privacy": "Privacy policy",
     "tos": "Terms of use",
+    "disclaimer": "SimplexPay connects individuals. No transaction takes place on the platform. We are not responsible for offers posted by users.",
     "copyright": "© 2026 SimplexPay. Built for the African diaspora."
   },
   "offers": {
@@ -201,6 +225,9 @@
     "categoryBateau": "Sea Freight",
     "sellCurrency": "Currency I sell",
     "sellCountry": "Country of sold currency",
+    "sellCountries": "Countries where your offer is available",
+    "sellCountriesHint": "Currency {currency} — tick compatible UEMOA/CEMAC countries",
+    "sellCountriesHintEmpty": "The first ticked country sets the currency",
     "buyCurrencyLabel": "Against",
     "amount": "Available amount",
     "rateMode": "Rate offered",
@@ -256,5 +283,31 @@
     "close": "Close",
     "yes": "Yes",
     "no": "No"
+  },
+  "profile": {
+    "notFound": "User not found.",
+    "backHome": "Back to home",
+    "certified": "Certified",
+    "certifiedTooltip": "Certified by SimplexPay",
+    "memberSince": "Member since {date}",
+    "reviewCount": "{count, plural, one {review} other {reviews}}",
+    "noReviewsYet": "No reviews yet",
+    "verifyToReview": "Verify your email before leaving a review.",
+    "loginToReview": "Log in to leave a review",
+    "reviewsTitle": "Reviews received",
+    "empty": "This user hasn't received any reviews yet.",
+    "edited": "edited",
+    "pageInfo": "Page {page} / {total}",
+    "newReviewFor": "Leave a review for {name}",
+    "editReviewFor": "Edit your review of {name}",
+    "formHelp": "Give a rating and an optional comment. You can edit your review anytime.",
+    "commentPlaceholder": "Briefly describe your experience (optional)",
+    "ratingLabel": "{n} star(s)",
+    "submitBtn": "Publish my review",
+    "updateBtn": "Update my review",
+    "submitting": "Sending…",
+    "savedOk": "Review saved.",
+    "errorRating": "Choose a rating between 1 and 5.",
+    "errorGeneric": "Something went wrong. Try again."
   }
 }

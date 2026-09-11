@@ -17,7 +17,9 @@ public class User : BaseEntity
     public DateTime? EmailVerificationCodeExpiresAt { get; private set; }
     public int EmailVerificationAttempts { get; private set; } = 0;
     public bool IsAdmin { get; private set; } = false;
+    public bool IsCertified { get; private set; } = false;
     public decimal Rating { get; private set; } = 0;
+    public int ReviewCount { get; private set; } = 0;
     public int TransactionCount { get; private set; } = 0;
 
     private readonly List<Offer> _offers = [];
@@ -81,15 +83,22 @@ public class User : BaseEntity
         MarkUpdated();
     }
 
-    public void UpdateRating(decimal newRating)
+    public void UpdateRating(decimal newRating, int reviewCount)
     {
         Rating = Math.Round(newRating, 2);
+        ReviewCount = reviewCount;
         MarkUpdated();
     }
 
     public void IncrementTransactionCount()
     {
         TransactionCount++;
+        MarkUpdated();
+    }
+
+    public void SetCertified(bool certified)
+    {
+        IsCertified = certified;
         MarkUpdated();
     }
 

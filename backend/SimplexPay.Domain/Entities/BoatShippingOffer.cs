@@ -61,4 +61,31 @@ public class BoatShippingOffer : BaseEntity
         Status = OfferStatus.Cancelled;
         MarkUpdated();
     }
+
+    public void Update(
+        decimal availableLbs,
+        decimal pricePerLb,
+        DateTime shipDepartureDate,
+        string departurePort,
+        string destinationPort,
+        string departureCountryCode,
+        string destinationCountryCode,
+        string? notes,
+        OfferStatus status)
+    {
+        if (availableLbs <= 0) throw new ArgumentException("Le poids disponible doit être positif.");
+        if (pricePerLb <= 0) throw new ArgumentException("Le prix par livre doit être positif.");
+
+        AvailableLbs = availableLbs;
+        PricePerLb = pricePerLb;
+        ShipDepartureDate = shipDepartureDate;
+        DeparturePort = departurePort.Trim();
+        DestinationPort = destinationPort.Trim();
+        DepartureCountryCode = departureCountryCode.ToUpperInvariant();
+        DestinationCountryCode = destinationCountryCode.ToUpperInvariant();
+        Notes = notes;
+        ExpiresAt = shipDepartureDate;
+        Status = status;
+        MarkUpdated();
+    }
 }

@@ -9,9 +9,15 @@ public record GetBoatShippingOffersQuery(
     string? DepartureCountryCode = null,
     string? DestinationCountryCode = null,
     string? Search = null,
+    decimal? MinLbs = null,
+    decimal? MaxLbs = null,
+    string? SortBy = null,
+    string? SortDir = null,
     int Page = 1,
     int PageSize = 20,
-    bool IsAuthenticated = false
+    bool IsAuthenticated = false,
+    bool VerifiedOnly = false,
+    decimal? MinRating = null
 ) : IRequest<PagedResult<BoatShippingOfferDto>>;
 
 public class GetBoatShippingOffersQueryHandler(IBoatShippingOfferRepository repo)
@@ -23,8 +29,14 @@ public class GetBoatShippingOffersQueryHandler(IBoatShippingOfferRepository repo
             req.DepartureCountryCode,
             req.DestinationCountryCode,
             req.Search,
+            req.MinLbs,
+            req.MaxLbs,
+            req.SortBy,
+            req.SortDir,
             req.Page,
             Math.Min(req.PageSize, 50),
+            req.VerifiedOnly,
+            req.MinRating,
             ct);
 
         var dtos = items.Select(o => BoatShippingOfferDto.From(o, req.IsAuthenticated)).ToList();

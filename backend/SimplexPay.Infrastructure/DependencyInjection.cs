@@ -20,6 +20,7 @@ public static class DependencyInjection
         services.AddScoped<IOfferRepository, OfferRepository>();
         services.AddScoped<ITravelKiloOfferRepository, TravelKiloOfferRepository>();
         services.AddScoped<IBoatShippingOfferRepository, BoatShippingOfferRepository>();
+        services.AddScoped<IReviewRepository, ReviewRepository>();
         services.AddScoped<ICurrencyRepository, CurrencyRepository>();
         services.AddScoped<ITokenService, TokenService>();
         services.AddSingleton<IPasswordHasher, PasswordHasherService>();

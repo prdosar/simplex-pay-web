@@ -9,9 +9,17 @@ public interface ITravelKiloOfferRepository
         string? departureCountryCode,
         string? destinationCountryCode,
         string? search,
+        decimal? minKg,
+        decimal? maxKg,
+        string? sortBy,
+        string? sortDir,
         int page,
         int pageSize,
+        bool verifiedOnly = false,
+        decimal? minRating = null,
         CancellationToken ct = default);
+    Task<(IList<TravelKiloOffer> Items, int Total)> GetByUserIdPagedAsync(
+        Guid userId, int page, int pageSize, CancellationToken ct = default);
     Task AddAsync(TravelKiloOffer offer, CancellationToken ct = default);
     Task SaveChangesAsync(CancellationToken ct = default);
 }

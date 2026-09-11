@@ -9,8 +9,9 @@ public record OfferDto(
     string SellCurrencySymbol,
     string BuyCurrency,
     string BuyCurrencySymbol,
-    string SellCountry,
-    string SellCountryFlag,
+    // Pays côté devise-produit : plusieurs (intégrations sous-régionnales UEMOA/CEMAC).
+    // Tous partagent SellCurrency. Le frontend résout drapeau/nom via /api/countries.
+    IList<string> SellCountries,
     string BuyCountry,
     string BuyCountryFlag,
     decimal Amount,
@@ -38,8 +39,7 @@ public record OfferDto(
             offer.SellCurrency?.Symbol ?? offer.SellCurrencyCode,
             offer.BuyCurrencyCode,
             offer.BuyCurrency?.Symbol ?? offer.BuyCurrencyCode,
-            offer.SellCountryCode,
-            offer.SellCountry?.Flag ?? "",
+            offer.Countries.Select(c => c.CountryCode).OrderBy(c => c).ToList(),
             offer.BuyCountryCode,
             offer.BuyCountry?.Flag ?? "",
             offer.Amount,
@@ -70,7 +70,9 @@ public record OfferCreatorDto(
     string FirstName,
     string? LastName,               // null pour anonyme
     decimal Rating,
+    int ReviewCount,
     int TransactionCount,
+    bool IsCertified,
     string? Phone,                  // null pour anonyme
     string? WhatsApp                // null pour anonyme
 )
@@ -80,7 +82,9 @@ public record OfferCreatorDto(
         user.FirstName,
         isAuthenticated ? user.LastName : null,
         user.Rating,
+        user.ReviewCount,
         user.TransactionCount,
+        user.IsCertified,
         isAuthenticated ? user.PhoneNumber : MaskPhone(user.PhoneNumber),
         isAuthenticated ? user.WhatsAppNumber : null
     );

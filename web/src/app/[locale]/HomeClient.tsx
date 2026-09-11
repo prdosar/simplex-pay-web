@@ -14,13 +14,17 @@ import type { PagedResult, OfferDto, CountryDto, PaymentMethodFacet, TravelKiloO
 
 type Tab = 'devises' | 'kilos' | 'bateau'
 type SortOption = 'recent' | 'rate_desc' | 'rate_asc' | 'amount_desc'
+type SortOptionTk = 'recent' | 'price_asc' | 'price_desc' | 'kg_desc'
+type SortOptionBs = 'recent' | 'price_asc' | 'price_desc' | 'lbs_desc'
 
 const SORT_KEYS: SortOption[] = ['recent', 'rate_desc', 'rate_asc', 'amount_desc']
+const SORT_KEYS_TK: SortOptionTk[] = ['recent', 'price_asc', 'price_desc', 'kg_desc']
+const SORT_KEYS_BS: SortOptionBs[] = ['recent', 'price_asc', 'price_desc', 'lbs_desc']
 
 export default function HomeClient({ locale }: { locale: string }) {
   const t = useTranslations('home')
   const tOffers = useTranslations('offers')
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
 
   const [activeTab, setActiveTab] = useState<Tab>('devises')
 
@@ -38,20 +42,49 @@ export default function HomeClient({ locale }: { locale: string }) {
   // ── TravelKilo state ──
   const [tkDeptCC, setTkDeptCC] = useState('')
   const [tkDestCC, setTkDestCC] = useState('')
+  const [tkSearchDraft, setTkSearchDraft] = useState('')
   const [tkSearch, setTkSearch] = useState('')
+  const [tkMinKg, setTkMinKg] = useState('')
+  const [tkMaxKg, setTkMaxKg] = useState('')
+  const [tkSort, setTkSort] = useState<SortOptionTk>('recent')
   const [tkPage, setTkPage] = useState(1)
 
   // ── BoatShipping state ──
   const [bsDeptCC, setBsDeptCC] = useState('')
   const [bsDestCC, setBsDestCC] = useState('')
+  const [bsSearchDraft, setBsSearchDraft] = useState('')
   const [bsSearch, setBsSearch] = useState('')
+  const [bsMinLbs, setBsMinLbs] = useState('')
+  const [bsMaxLbs, setBsMaxLbs] = useState('')
+  const [bsSort, setBsSort] = useState<SortOptionBs>('recent')
   const [bsPage, setBsPage] = useState(1)
 
-  // Debounced search for devises
+  // ── Filtres confiance partagés (Devises + Kilos + Fret) ──
+  const [trustVerifiedOnly, setTrustVerifiedOnly] = useState(false)
+  const [trustMinRating, setTrustMinRating] = useState(0) // 0 = pas de filtre, 1-5 = min étoiles
+
+  function updateTrustVerified(v: boolean) {
+    setTrustVerifiedOnly(v); setPage(1); setTkPage(1); setBsPage(1)
+  }
+  function updateTrustRating(n: number) {
+    // Re-clic sur la même étoile → clear
+    setTrustMinRating(prev => prev === n ? 0 : n)
+    setPage(1); setTkPage(1); setBsPage(1)
+  }
+
+  // Debounced search
   useEffect(() => {
     const timer = setTimeout(() => { setSearch(searchDraft); setPage(1) }, 350)
     return () => clearTimeout(timer)
   }, [searchDraft])
+  useEffect(() => {
+    const timer = setTimeout(() => { setTkSearch(tkSearchDraft); setTkPage(1) }, 350)
+    return () => clearTimeout(timer)
+  }, [tkSearchDraft])
+  useEffect(() => {
+    const timer = setTimeout(() => { setBsSearch(bsSearchDraft); setBsPage(1) }, 350)
+    return () => clearTimeout(timer)
+  }, [bsSearchDraft])
 
   const { data: countries } = useSWR<CountryDto[]>(
     '/api/countries',
@@ -63,10 +96,18 @@ export default function HomeClient({ locale }: { locale: string }) {
   const paymentMethods = selectedCountry?.paymentMethods ?? []
 
   useEffect(() => {
-    if (countries && sellCountries.length > 0 && !sellCountry) {
-      setSellCountry(sellCountries[0].code)
+    if (!countries) return
+    // Devises: prefer user.country if it's a valid Sell country, else first Sell country.
+    if (sellCountries.length > 0 && !sellCountry) {
+      const preferred = user?.country && sellCountries.find(c => c.code === user.country)
+      setSellCountry(preferred ? preferred.code : sellCountries[0].code)
     }
-  }, [countries]) // eslint-disable-line react-hooks/exhaustive-deps
+    // Kilos & Fret: default departure to user.country (destination stays empty).
+    if (user?.country && countries.some(c => c.code === user.country)) {
+      if (!tkDeptCC) setTkDeptCC(user.country)
+      if (!bsDeptCC) setBsDeptCC(user.country)
+    }
+  }, [countries, user]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function buildFacetsQuery() {
     const p = new URLSearchParams()
@@ -92,6 +133,8 @@ export default function HomeClient({ locale }: { locale: string }) {
     if (sort === 'rate_desc')   { p.set('sortBy', 'rate');   p.set('sortDir', 'desc') }
     if (sort === 'rate_asc')    { p.set('sortBy', 'rate');   p.set('sortDir', 'asc') }
     if (sort === 'amount_desc') { p.set('sortBy', 'amount'); p.set('sortDir', 'desc') }
+    if (trustVerifiedOnly) p.set('verifiedOnly', 'true')
+    if (trustMinRating > 0) p.set('minRating', String(trustMinRating))
     p.set('page', String(page))
     p.set('pageSize', '12')
     return p.toString()
@@ -107,6 +150,13 @@ export default function HomeClient({ locale }: { locale: string }) {
     if (tkDeptCC) p.set('departureCountryCode', tkDeptCC)
     if (tkDestCC) p.set('destinationCountryCode', tkDestCC)
     if (tkSearch) p.set('search', tkSearch)
+    if (tkMinKg) p.set('minKg', tkMinKg)
+    if (tkMaxKg) p.set('maxKg', tkMaxKg)
+    if (tkSort === 'price_asc')  { p.set('sortBy', 'price'); p.set('sortDir', 'asc') }
+    if (tkSort === 'price_desc') { p.set('sortBy', 'price'); p.set('sortDir', 'desc') }
+    if (tkSort === 'kg_desc')    { p.set('sortBy', 'kg') }
+    if (trustVerifiedOnly) p.set('verifiedOnly', 'true')
+    if (trustMinRating > 0) p.set('minRating', String(trustMinRating))
     p.set('page', String(tkPage))
     p.set('pageSize', '12')
     return p.toString()
@@ -122,6 +172,13 @@ export default function HomeClient({ locale }: { locale: string }) {
     if (bsDeptCC) p.set('departureCountryCode', bsDeptCC)
     if (bsDestCC) p.set('destinationCountryCode', bsDestCC)
     if (bsSearch) p.set('search', bsSearch)
+    if (bsMinLbs) p.set('minLbs', bsMinLbs)
+    if (bsMaxLbs) p.set('maxLbs', bsMaxLbs)
+    if (bsSort === 'price_asc')  { p.set('sortBy', 'price'); p.set('sortDir', 'asc') }
+    if (bsSort === 'price_desc') { p.set('sortBy', 'price'); p.set('sortDir', 'desc') }
+    if (bsSort === 'lbs_desc')   { p.set('sortBy', 'lbs') }
+    if (trustVerifiedOnly) p.set('verifiedOnly', 'true')
+    if (trustMinRating > 0) p.set('minRating', String(trustMinRating))
     p.set('page', String(bsPage))
     p.set('pageSize', '12')
     return p.toString()
@@ -145,6 +202,8 @@ export default function HomeClient({ locale }: { locale: string }) {
     setSearchDraft('')
     setSearch('')
     setSort('recent')
+    setTrustVerifiedOnly(false)
+    setTrustMinRating(0)
     setPage(1)
   }
 
@@ -165,14 +224,86 @@ export default function HomeClient({ locale }: { locale: string }) {
     amount_desc: t('offers.sortAmountDesc'),
   }
 
+  const tkSortLabels: Record<SortOptionTk, string> = {
+    recent:     t('travelKilo.sortRecent'),
+    price_asc:  t('travelKilo.sortPriceAsc'),
+    price_desc: t('travelKilo.sortPriceDesc'),
+    kg_desc:    t('travelKilo.sortKgDesc'),
+  }
+
+  const bsSortLabels: Record<SortOptionBs, string> = {
+    recent:     t('boatShipping.sortRecent'),
+    price_asc:  t('boatShipping.sortPriceAsc'),
+    price_desc: t('boatShipping.sortPriceDesc'),
+    lbs_desc:   t('boatShipping.sortLbsDesc'),
+  }
+
+  const trustActiveCount = (trustVerifiedOnly ? 1 : 0) + (trustMinRating > 0 ? 1 : 0)
+
   const activeCount = [minAmount || maxAmount, search].filter(Boolean).length
-    + (sort !== 'recent' ? 1 : 0) + checkedPaymentMethods.size
+    + (sort !== 'recent' ? 1 : 0) + checkedPaymentMethods.size + trustActiveCount
+
+  const tkActiveCount = [tkMinKg || tkMaxKg, tkSearch].filter(Boolean).length
+    + (tkSort !== 'recent' ? 1 : 0) + trustActiveCount
+  const bsActiveCount = [bsMinLbs || bsMaxLbs, bsSearch].filter(Boolean).length
+    + (bsSort !== 'recent' ? 1 : 0) + trustActiveCount
+
+  function resetTkFilters() {
+    setTkMinKg(''); setTkMaxKg(''); setTkSearchDraft(''); setTkSearch(''); setTkSort('recent')
+    setTrustVerifiedOnly(false); setTrustMinRating(0); setTkPage(1)
+  }
+  function resetBsFilters() {
+    setBsMinLbs(''); setBsMaxLbs(''); setBsSearchDraft(''); setBsSearch(''); setBsSort('recent')
+    setTrustVerifiedOnly(false); setTrustMinRating(0); setBsPage(1)
+  }
 
   useEffect(() => {
     function onResize() { if (window.innerWidth >= 1024) setMobileSidebarOpen(false) }
     window.addEventListener('resize', onResize)
     return () => window.removeEventListener('resize', onResize)
   }, [])
+
+  // Bloc filtres confiance (certifié + min étoiles) — partagé par les 3 onglets.
+  const trustFilterBlock = (
+    <div className="space-y-4 pb-4 border-b" style={{ borderColor: '#f1f5f9' }}>
+      <div>
+        <label className="block text-[11px] font-bold uppercase tracking-[0.06em] mb-2" style={{ color: '#64748b' }}>
+          {t('trust.label')}
+        </label>
+        <label className="flex items-center gap-2 cursor-pointer group">
+          <input
+            type="checkbox"
+            checked={trustVerifiedOnly}
+            onChange={e => updateTrustVerified(e.target.checked)}
+            className="w-4 h-4 accent-[#0d9488]"
+          />
+          <span className="text-sm group-hover:text-[#0d9488]" style={{ color: '#334155' }}>
+            {t('trust.verifiedOnly')}
+          </span>
+        </label>
+      </div>
+      <div>
+        <p className="text-[11px] font-bold uppercase tracking-[0.06em] mb-2" style={{ color: '#64748b' }}>
+          {t('trust.minRating')}
+        </p>
+        <div className="flex items-center gap-1">
+          {[1, 2, 3, 4, 5].map(n => (
+            <button
+              key={n}
+              type="button"
+              onClick={() => updateTrustRating(n)}
+              aria-label={t('trust.minRatingAria', { n })}
+              className="text-2xl leading-none transition-transform hover:scale-110"
+              style={{ color: n <= trustMinRating ? '#f59e0b' : '#e2e8f0' }}
+            >★</button>
+          ))}
+        </div>
+        <p className="text-[11px] mt-1.5" style={{ color: trustMinRating > 0 ? '#0d9488' : '#94a3b8' }}>
+          {trustMinRating > 0 ? t('trust.minRatingValue', { n: trustMinRating }) : t('trust.noRatingFilter')}
+        </p>
+      </div>
+    </div>
+  )
 
   const TABS: { key: Tab; label: string }[] = [
     { key: 'devises', label: t('tabs.devises') },
@@ -259,8 +390,8 @@ export default function HomeClient({ locale }: { locale: string }) {
               {t('hero.ctaPost')}
             </Link>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {([t('hero.trust1'), t('hero.trust2'), t('hero.trust3')] as string[]).map((pt, i) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {([t('hero.trust1'), t('hero.trust3')] as string[]).map((pt, i) => (
               <div key={i} className="flex items-center gap-2">
                 <span className="w-[18px] h-[18px] rounded-full flex items-center justify-center text-[11px] font-extrabold shrink-0"
                       style={{ background: '#ccfbf1', color: '#0f766e' }}>✓</span>
@@ -270,52 +401,41 @@ export default function HomeClient({ locale }: { locale: string }) {
           </div>
         </div>
 
-        {/* Right: example offer card */}
-        <div className="flex-1 flex justify-center items-center w-full lg:min-w-[380px] max-w-[420px]">
-          <div className="w-full max-w-[380px] bg-white rounded-[20px] shadow-[0_20px_50px_-12px_rgba(15,23,42,0.15)] border border-[#e2e8f0] overflow-hidden">
-            <div className="h-[6px]" style={{ background: 'linear-gradient(90deg,#0d9488,#f97316)' }} />
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-5">
-                <div className="flex items-center gap-2 font-bold text-base">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={flagUrl('fr')} alt="FR" className="w-[22px] h-[16px] rounded-sm object-cover" />
-                  <span>EUR</span>
-                  <span style={{ color: '#94a3b8' }}>→</span>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={flagUrl('tg')} alt="TG" className="w-[22px] h-[16px] rounded-sm object-cover" />
-                  <span>XOF</span>
-                </div>
-                <span className="text-[11px] font-semibold px-[9px] py-[3px] rounded-full" style={{ color: '#0d9488', background: '#ccfbf1' }}>
-                  Active
-                </span>
-              </div>
-              <p className="text-[11px] uppercase tracking-[0.06em] mb-1" style={{ color: '#64748b' }}>
-                {tOffers('card.rate')}
-              </p>
-              <p className="text-[32px] font-extrabold mb-5" style={{ color: '#0d9488' }}>
-                655,96 <span className="text-sm font-medium" style={{ color: '#64748b' }}>XOF / EUR</span>
-              </p>
-              <div className="grid grid-cols-2 gap-3 mb-5 text-sm">
-                <div>
-                  <p className="mb-0.5" style={{ color: '#64748b' }}>{tOffers('card.available')}</p>
-                  <p className="font-bold">500 000 XOF</p>
-                </div>
-                <div>
-                  <p className="mb-0.5" style={{ color: '#64748b' }}>{tOffers('card.minMax')}</p>
-                  <p className="font-bold">50k – 500k</p>
-                </div>
-              </div>
-              <div className="flex items-center justify-between pt-4 border-t border-[#f1f5f9]">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white" style={{ background: '#0d9488' }}>K</div>
-                  <span className="text-sm font-semibold">Kossi</span>
-                  <span className="text-xs" style={{ color: '#64748b' }}>★ 4.8</span>
-                </div>
-                <span className="text-xs font-bold" style={{ color: '#0d9488' }}>
-                  {tOffers('card.contact')}
-                </span>
-              </div>
-            </div>
+        {/* Right: diaspora illustration */}
+        <div className="flex-1 flex justify-center items-center w-full lg:min-w-[380px] max-w-[520px]">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/hero-diaspora.webp"
+            alt=""
+            aria-hidden="true"
+            className="w-full max-w-[460px] h-auto object-contain select-none"
+            draggable={false}
+          />
+        </div>
+      </section>
+
+
+      {/* ── DISCLAIMER ── */}
+      <section className="px-6 pb-10">
+        <div
+          className="max-w-[1200px] mx-auto rounded-2xl p-5 sm:p-6 flex gap-4"
+          style={{ background: '#fef3c7', border: '1px solid #fcd34d' }}
+          role="note"
+        >
+          <div
+            className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-base font-extrabold"
+            style={{ background: '#fbbf24', color: '#78350f' }}
+            aria-hidden="true"
+          >
+            !
+          </div>
+          <div className="min-w-0">
+            <p className="text-[15px] font-bold mb-1" style={{ color: '#78350f' }}>
+              {t('disclaimer.title')}
+            </p>
+            <p className="text-sm leading-relaxed" style={{ color: '#92400e' }}>
+              {t('disclaimer.body')}
+            </p>
           </div>
         </div>
       </section>
@@ -511,26 +631,27 @@ export default function HomeClient({ locale }: { locale: string }) {
                       <label className="block text-[11px] font-bold uppercase tracking-[0.06em] mb-2" style={{ color: '#64748b' }}>
                         {t('offers.amountLabel')}
                       </label>
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-col gap-2">
                         <input
                           type="number"
                           min="0"
                           placeholder="Min"
                           value={minAmount}
                           onChange={e => { setMinAmount(e.target.value); setPage(1) }}
-                          className="w-0 flex-1 border border-[#e2e8f0] rounded-lg px-2.5 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#0d9488] min-w-0"
+                          className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#0d9488]"
                         />
-                        <span className="text-xs shrink-0" style={{ color: '#94a3b8' }}>—</span>
                         <input
                           type="number"
                           min="0"
                           placeholder="Max"
                           value={maxAmount}
                           onChange={e => { setMaxAmount(e.target.value); setPage(1) }}
-                          className="w-0 flex-1 border border-[#e2e8f0] rounded-lg px-2.5 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#0d9488] min-w-0"
+                          className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#0d9488]"
                         />
                       </div>
                     </div>
+
+                    {trustFilterBlock}
 
                     {activeCount > 0 && (
                       <button
@@ -575,39 +696,39 @@ export default function HomeClient({ locale }: { locale: string }) {
           {/* ── TRAVEL KILO TAB ── */}
           {activeTab === 'kilos' && (
             <>
-              <div className="flex flex-wrap gap-3 mb-6 items-center">
-                <div className="relative flex items-center flex-1 min-w-[200px]">
+              {/* Search bar + result count */}
+              <div className="flex items-center gap-3 mb-6 flex-wrap">
+                <button
+                  onClick={() => setMobileSidebarOpen(v => !v)}
+                  className="lg:hidden shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-lg border text-sm font-medium transition-colors"
+                  style={{
+                    borderColor: mobileSidebarOpen || tkActiveCount > 0 ? '#0d9488' : '#e2e8f0',
+                    background: mobileSidebarOpen || tkActiveCount > 0 ? '#ccfbf1' : 'white',
+                    color: mobileSidebarOpen || tkActiveCount > 0 ? '#0d9488' : '#0f172a',
+                  }}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
+                  </svg>
+                  {tkActiveCount > 0 && (
+                    <span className="text-white rounded-full w-4 h-4 text-[10px] flex items-center justify-center" style={{ background: '#0d9488' }}>{tkActiveCount}</span>
+                  )}
+                </button>
+
+                <div className="flex-1 min-w-[240px] relative flex items-center">
                   <svg className="absolute left-3.5 w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#94a3b8' }}>
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                   <input
                     type="text"
-                    value={tkSearch}
-                    onChange={e => { setTkSearch(e.target.value); setTkPage(1) }}
+                    value={tkSearchDraft}
+                    onChange={e => setTkSearchDraft(e.target.value)}
                     placeholder={t('travelKilo.searchPlaceholder')}
-                    className="w-full pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0d9488] rounded-[10px] border border-[#e2e8f0] bg-white"
+                    className="w-full py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0d9488] rounded-[10px] border border-[#e2e8f0] bg-white"
+                    style={{ paddingLeft: '38px', paddingRight: '16px' }}
                   />
                 </div>
-                <select
-                  value={tkDeptCC}
-                  onChange={e => { setTkDeptCC(e.target.value); setTkPage(1) }}
-                  className="border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#0d9488]"
-                >
-                  <option value="">{t('travelKilo.departureLabel')}</option>
-                  {countries?.map(c => (
-                    <option key={c.code} value={c.code}>{locale === 'fr' ? c.nameFr : c.name}</option>
-                  ))}
-                </select>
-                <select
-                  value={tkDestCC}
-                  onChange={e => { setTkDestCC(e.target.value); setTkPage(1) }}
-                  className="border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#0d9488]"
-                >
-                  <option value="">{t('travelKilo.destinationLabel')}</option>
-                  {countries?.map(c => (
-                    <option key={c.code} value={c.code}>{locale === 'fr' ? c.nameFr : c.name}</option>
-                  ))}
-                </select>
+
                 {tkData !== undefined && (
                   <span className="text-sm whitespace-nowrap shrink-0" style={{ color: '#64748b' }}>
                     {t('travelKilo.resultCount', { count: tkData.total })}
@@ -615,59 +736,177 @@ export default function HomeClient({ locale }: { locale: string }) {
                 )}
               </div>
 
-              {tkLoading ? renderSkeletons() : tkData?.items.length === 0 ? (
-                <div className="text-center py-16" style={{ color: '#64748b' }}>
-                  <p className="text-base">{t('travelKilo.empty')}</p>
-                </div>
-              ) : (
-                <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-                    {tkData?.items.map(offer => (
-                      <TravelKiloCard key={offer.id} offer={offer} isAuthenticated={isAuthenticated} locale={locale} />
-                    ))}
+              <div className="flex gap-6 items-start">
+                {/* Sidebar */}
+                <div className={`${mobileSidebarOpen ? 'block' : 'hidden'} lg:block w-full lg:w-[260px] shrink-0 lg:sticky lg:top-[88px]`}>
+                  <div className="bg-white border border-[#e2e8f0] rounded-2xl p-5 space-y-5">
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase tracking-[0.06em] mb-2" style={{ color: '#64748b' }}>
+                        {t('travelKilo.departureLabel')}
+                      </label>
+                      <div className="relative">
+                        {tkDeptCC && (
+                          <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 z-10">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={flagUrl(tkDeptCC)} alt={tkDeptCC} className="w-6 h-4 rounded-sm object-cover" />
+                          </div>
+                        )}
+                        <select
+                          value={tkDeptCC}
+                          onChange={e => { setTkDeptCC(e.target.value); setTkPage(1) }}
+                          className="w-full border border-[#e2e8f0] rounded-lg py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#0d9488]"
+                          style={{ paddingLeft: tkDeptCC ? '40px' : '12px', paddingRight: '10px' }}
+                        >
+                          <option value="">{t('travelKilo.allCountries')}</option>
+                          {countries?.map(c => (
+                            <option key={c.code} value={c.code}>{locale === 'fr' ? c.nameFr : c.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase tracking-[0.06em] mb-2" style={{ color: '#64748b' }}>
+                        {t('travelKilo.destinationLabel')}
+                      </label>
+                      <div className="relative">
+                        {tkDestCC && (
+                          <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 z-10">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={flagUrl(tkDestCC)} alt={tkDestCC} className="w-6 h-4 rounded-sm object-cover" />
+                          </div>
+                        )}
+                        <select
+                          value={tkDestCC}
+                          onChange={e => { setTkDestCC(e.target.value); setTkPage(1) }}
+                          className="w-full border border-[#e2e8f0] rounded-lg py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#0d9488]"
+                          style={{ paddingLeft: tkDestCC ? '40px' : '12px', paddingRight: '10px' }}
+                        >
+                          <option value="">{t('travelKilo.allCountries')}</option>
+                          {countries?.map(c => (
+                            <option key={c.code} value={c.code}>{locale === 'fr' ? c.nameFr : c.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase tracking-[0.06em] mb-2" style={{ color: '#64748b' }}>
+                        {t('travelKilo.sortLabel')}
+                      </label>
+                      <select
+                        value={tkSort}
+                        onChange={e => { setTkSort(e.target.value as SortOptionTk); setTkPage(1) }}
+                        className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#0d9488]"
+                      >
+                        {SORT_KEYS_TK.map(key => (
+                          <option key={key} value={key}>{tkSortLabels[key]}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase tracking-[0.06em] mb-2" style={{ color: '#64748b' }}>
+                        {t('travelKilo.kgLabel')}
+                      </label>
+                      <div className="flex flex-col gap-2">
+                        <input
+                          type="number"
+                          min="0"
+                          placeholder="Min"
+                          value={tkMinKg}
+                          onChange={e => { setTkMinKg(e.target.value); setTkPage(1) }}
+                          className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#0d9488]"
+                        />
+                        <input
+                          type="number"
+                          min="0"
+                          placeholder="Max"
+                          value={tkMaxKg}
+                          onChange={e => { setTkMaxKg(e.target.value); setTkPage(1) }}
+                          className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#0d9488]"
+                        />
+                      </div>
+                    </div>
+
+                    {trustFilterBlock}
+
+                    {tkActiveCount > 0 && (
+                      <button
+                        onClick={resetTkFilters}
+                        className="w-full py-2.5 rounded-lg border text-xs font-semibold transition-colors"
+                        style={{ borderColor: '#e2e8f0', color: '#64748b' }}
+                        onMouseEnter={e => { e.currentTarget.style.borderColor = '#ef4444'; e.currentTarget.style.color = '#ef4444' }}
+                        onMouseLeave={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.color = '#64748b' }}
+                      >
+                        {t('offers.clearFilters', { count: tkActiveCount })}
+                      </button>
+                    )}
                   </div>
-                  {tkData && renderPagination(tkPage, tkData.totalPages, setTkPage)}
-                </>
-              )}
+                </div>
+
+                {/* Grid */}
+                <div className="flex-1 min-w-0">
+                  {tkLoading ? renderSkeletons() : tkData?.items.length === 0 ? (
+                    <div className="text-center py-16" style={{ color: '#64748b' }}>
+                      <p className="text-base mb-3">{t('travelKilo.empty')}</p>
+                      {tkActiveCount > 0 && (
+                        <button onClick={resetTkFilters} className="text-sm font-bold hover:underline" style={{ color: '#0d9488' }}>
+                          {t('offers.clearFilters', { count: tkActiveCount })}
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                        {tkData?.items.map(offer => (
+                          <TravelKiloCard key={offer.id} offer={offer} isAuthenticated={isAuthenticated} locale={locale} />
+                        ))}
+                      </div>
+                      {tkData && renderPagination(tkPage, tkData.totalPages, setTkPage)}
+                    </>
+                  )}
+                </div>
+              </div>
             </>
           )}
 
           {/* ── BOAT SHIPPING TAB ── */}
           {activeTab === 'bateau' && (
             <>
-              <div className="flex flex-wrap gap-3 mb-6 items-center">
-                <div className="relative flex items-center flex-1 min-w-[200px]">
+              {/* Search bar + result count */}
+              <div className="flex items-center gap-3 mb-6 flex-wrap">
+                <button
+                  onClick={() => setMobileSidebarOpen(v => !v)}
+                  className="lg:hidden shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-lg border text-sm font-medium transition-colors"
+                  style={{
+                    borderColor: mobileSidebarOpen || bsActiveCount > 0 ? '#0d9488' : '#e2e8f0',
+                    background: mobileSidebarOpen || bsActiveCount > 0 ? '#ccfbf1' : 'white',
+                    color: mobileSidebarOpen || bsActiveCount > 0 ? '#0d9488' : '#0f172a',
+                  }}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
+                  </svg>
+                  {bsActiveCount > 0 && (
+                    <span className="text-white rounded-full w-4 h-4 text-[10px] flex items-center justify-center" style={{ background: '#0d9488' }}>{bsActiveCount}</span>
+                  )}
+                </button>
+
+                <div className="flex-1 min-w-[240px] relative flex items-center">
                   <svg className="absolute left-3.5 w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#94a3b8' }}>
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                   <input
                     type="text"
-                    value={bsSearch}
-                    onChange={e => { setBsSearch(e.target.value); setBsPage(1) }}
+                    value={bsSearchDraft}
+                    onChange={e => setBsSearchDraft(e.target.value)}
                     placeholder={t('boatShipping.searchPlaceholder')}
-                    className="w-full pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0d9488] rounded-[10px] border border-[#e2e8f0] bg-white"
+                    className="w-full py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0d9488] rounded-[10px] border border-[#e2e8f0] bg-white"
+                    style={{ paddingLeft: '38px', paddingRight: '16px' }}
                   />
                 </div>
-                <select
-                  value={bsDeptCC}
-                  onChange={e => { setBsDeptCC(e.target.value); setBsPage(1) }}
-                  className="border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#0d9488]"
-                >
-                  <option value="">{t('boatShipping.departureLabel')}</option>
-                  {countries?.map(c => (
-                    <option key={c.code} value={c.code}>{locale === 'fr' ? c.nameFr : c.name}</option>
-                  ))}
-                </select>
-                <select
-                  value={bsDestCC}
-                  onChange={e => { setBsDestCC(e.target.value); setBsPage(1) }}
-                  className="border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#0d9488]"
-                >
-                  <option value="">{t('boatShipping.destinationLabel')}</option>
-                  {countries?.map(c => (
-                    <option key={c.code} value={c.code}>{locale === 'fr' ? c.nameFr : c.name}</option>
-                  ))}
-                </select>
+
                 {bsData !== undefined && (
                   <span className="text-sm whitespace-nowrap shrink-0" style={{ color: '#64748b' }}>
                     {t('boatShipping.resultCount', { count: bsData.total })}
@@ -675,20 +914,138 @@ export default function HomeClient({ locale }: { locale: string }) {
                 )}
               </div>
 
-              {bsLoading ? renderSkeletons() : bsData?.items.length === 0 ? (
-                <div className="text-center py-16" style={{ color: '#64748b' }}>
-                  <p className="text-base">{t('boatShipping.empty')}</p>
-                </div>
-              ) : (
-                <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-                    {bsData?.items.map(offer => (
-                      <BoatShippingCard key={offer.id} offer={offer} isAuthenticated={isAuthenticated} locale={locale} />
-                    ))}
+              <div className="flex gap-6 items-start">
+                {/* Sidebar */}
+                <div className={`${mobileSidebarOpen ? 'block' : 'hidden'} lg:block w-full lg:w-[260px] shrink-0 lg:sticky lg:top-[88px]`}>
+                  <div className="bg-white border border-[#e2e8f0] rounded-2xl p-5 space-y-5">
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase tracking-[0.06em] mb-2" style={{ color: '#64748b' }}>
+                        {t('boatShipping.departureLabel')}
+                      </label>
+                      <div className="relative">
+                        {bsDeptCC && (
+                          <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 z-10">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={flagUrl(bsDeptCC)} alt={bsDeptCC} className="w-6 h-4 rounded-sm object-cover" />
+                          </div>
+                        )}
+                        <select
+                          value={bsDeptCC}
+                          onChange={e => { setBsDeptCC(e.target.value); setBsPage(1) }}
+                          className="w-full border border-[#e2e8f0] rounded-lg py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#0d9488]"
+                          style={{ paddingLeft: bsDeptCC ? '40px' : '12px', paddingRight: '10px' }}
+                        >
+                          <option value="">{t('boatShipping.allCountries')}</option>
+                          {countries?.map(c => (
+                            <option key={c.code} value={c.code}>{locale === 'fr' ? c.nameFr : c.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase tracking-[0.06em] mb-2" style={{ color: '#64748b' }}>
+                        {t('boatShipping.destinationLabel')}
+                      </label>
+                      <div className="relative">
+                        {bsDestCC && (
+                          <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 z-10">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={flagUrl(bsDestCC)} alt={bsDestCC} className="w-6 h-4 rounded-sm object-cover" />
+                          </div>
+                        )}
+                        <select
+                          value={bsDestCC}
+                          onChange={e => { setBsDestCC(e.target.value); setBsPage(1) }}
+                          className="w-full border border-[#e2e8f0] rounded-lg py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#0d9488]"
+                          style={{ paddingLeft: bsDestCC ? '40px' : '12px', paddingRight: '10px' }}
+                        >
+                          <option value="">{t('boatShipping.allCountries')}</option>
+                          {countries?.map(c => (
+                            <option key={c.code} value={c.code}>{locale === 'fr' ? c.nameFr : c.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase tracking-[0.06em] mb-2" style={{ color: '#64748b' }}>
+                        {t('boatShipping.sortLabel')}
+                      </label>
+                      <select
+                        value={bsSort}
+                        onChange={e => { setBsSort(e.target.value as SortOptionBs); setBsPage(1) }}
+                        className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#0d9488]"
+                      >
+                        {SORT_KEYS_BS.map(key => (
+                          <option key={key} value={key}>{bsSortLabels[key]}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase tracking-[0.06em] mb-2" style={{ color: '#64748b' }}>
+                        {t('boatShipping.lbsLabel')}
+                      </label>
+                      <div className="flex flex-col gap-2">
+                        <input
+                          type="number"
+                          min="0"
+                          placeholder="Min"
+                          value={bsMinLbs}
+                          onChange={e => { setBsMinLbs(e.target.value); setBsPage(1) }}
+                          className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#0d9488]"
+                        />
+                        <input
+                          type="number"
+                          min="0"
+                          placeholder="Max"
+                          value={bsMaxLbs}
+                          onChange={e => { setBsMaxLbs(e.target.value); setBsPage(1) }}
+                          className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#0d9488]"
+                        />
+                      </div>
+                    </div>
+
+                    {trustFilterBlock}
+
+                    {bsActiveCount > 0 && (
+                      <button
+                        onClick={resetBsFilters}
+                        className="w-full py-2.5 rounded-lg border text-xs font-semibold transition-colors"
+                        style={{ borderColor: '#e2e8f0', color: '#64748b' }}
+                        onMouseEnter={e => { e.currentTarget.style.borderColor = '#ef4444'; e.currentTarget.style.color = '#ef4444' }}
+                        onMouseLeave={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.color = '#64748b' }}
+                      >
+                        {t('offers.clearFilters', { count: bsActiveCount })}
+                      </button>
+                    )}
                   </div>
-                  {bsData && renderPagination(bsPage, bsData.totalPages, setBsPage)}
-                </>
-              )}
+                </div>
+
+                {/* Grid */}
+                <div className="flex-1 min-w-0">
+                  {bsLoading ? renderSkeletons() : bsData?.items.length === 0 ? (
+                    <div className="text-center py-16" style={{ color: '#64748b' }}>
+                      <p className="text-base mb-3">{t('boatShipping.empty')}</p>
+                      {bsActiveCount > 0 && (
+                        <button onClick={resetBsFilters} className="text-sm font-bold hover:underline" style={{ color: '#0d9488' }}>
+                          {t('offers.clearFilters', { count: bsActiveCount })}
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                        {bsData?.items.map(offer => (
+                          <BoatShippingCard key={offer.id} offer={offer} isAuthenticated={isAuthenticated} locale={locale} />
+                        ))}
+                      </div>
+                      {bsData && renderPagination(bsPage, bsData.totalPages, setBsPage)}
+                    </>
+                  )}
+                </div>
+              </div>
             </>
           )}
 

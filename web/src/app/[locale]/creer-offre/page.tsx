@@ -54,8 +54,9 @@ export default function CreateOfferPage() {
   const [success, setSuccess] = useState(false)
 
   // ── Devises form ──
+  // Multi-pays : au moins 1 sélectionné. Le 1er coché impose la devise ; les pays
+  // partageant cette devise (UEMOA/CEMAC) deviennent cochables, les autres sont grisés.
   const [form, setForm] = useState({
-    sellCountryCode: '',
     amount: '',
     rateMode: 'GoogleDaily' as RateMode,
     rate: '',
@@ -63,6 +64,7 @@ export default function CreateOfferPage() {
     notes: '',
     expiryHours: '48',
   })
+  const [sellCountryCodes, setSellCountryCodes] = useState<string[]>([])
   const [selectedPaymentMethods, setSelectedPaymentMethods] = useState<string[]>([])
 
   // Pays africains = ceux qui vendent une devise (currencyType='Sell')
@@ -71,26 +73,80 @@ export default function CreateOfferPage() {
     [countries]
   )
 
-  // Défaut : pays de l'user si africain, sinon Togo
+  // Zones devises : liste unique des currencyCode disponibles, avec leurs pays.
+  const currencyZones = useMemo(() => {
+    const map = new Map<string, CountryDto[]>()
+    africanCountries.forEach(c => {
+      const arr = map.get(c.currencyCode) ?? []
+      arr.push(c)
+      map.set(c.currencyCode, arr)
+    })
+    return Array.from(map.entries())
+      .map(([code, list]) => ({ code, countries: list }))
+      .sort((a, b) => a.code.localeCompare(b.code))
+  }, [africanCountries])
+
+  // Défaut : pays de l'user si africain, sinon Togo (1 seul coché au démarrage).
   useEffect(() => {
-    if (form.sellCountryCode || !africanCountries.length) return
+    if (sellCountryCodes.length || !africanCountries.length) return
     const userAfrican = user?.country && africanCountries.find(c => c.code === user.country)
     const chosen = userAfrican?.code
       ?? africanCountries.find(c => c.code === DEFAULT_AFRICAN_COUNTRY)?.code
       ?? africanCountries[0]?.code
-    if (chosen) setForm(prev => ({ ...prev, sellCountryCode: chosen }))
-  }, [africanCountries, user?.country, form.sellCountryCode])
+    if (chosen) setSellCountryCodes([chosen])
+  }, [africanCountries, user?.country, sellCountryCodes.length])
 
-  const sellCountryData = countries?.find(c => c.code === form.sellCountryCode)
-  const sellCurrencyCode = sellCountryData?.currencyCode ?? ''
-  const availablePaymentMethods: PaymentMethodDto[] = sellCountryData?.paymentMethods ?? []
+  // Devise dérivée du 1er pays coché. Impose la contrainte sur les autres.
+  const sellCurrencyCode = useMemo(() => {
+    if (!sellCountryCodes.length) return ''
+    const first = africanCountries.find(c => c.code === sellCountryCodes[0])
+    return first?.currencyCode ?? ''
+  }, [sellCountryCodes, africanCountries])
 
-  // Reset des méthodes sélectionnées quand on change de pays
+  // Pays visibles = ceux de la devise active seulement.
+  const visibleCountries = useMemo(
+    () => sellCurrencyCode
+      ? africanCountries.filter(c => c.currencyCode === sellCurrencyCode)
+      : africanCountries,
+    [africanCountries, sellCurrencyCode]
+  )
+
+  // Changer de zone devise : reset et sélectionne le 1er pays de la nouvelle zone.
+  function switchCurrencyZone(currencyCode: string) {
+    if (currencyCode === sellCurrencyCode) return
+    const zone = currencyZones.find(z => z.code === currencyCode)
+    if (!zone?.countries.length) return
+    setSellCountryCodes([zone.countries[0].code])
+  }
+
+  // Union des moyens de paiement des pays sélectionnés (dédup par id).
+  const availablePaymentMethods: PaymentMethodDto[] = useMemo(() => {
+    if (!sellCountryCodes.length) return []
+    const seen = new Map<string, PaymentMethodDto>()
+    for (const code of sellCountryCodes) {
+      const country = africanCountries.find(c => c.code === code)
+      country?.paymentMethods.forEach(pm => { if (!seen.has(pm.id)) seen.set(pm.id, pm) })
+    }
+    return Array.from(seen.values())
+  }, [sellCountryCodes, africanCountries])
+
+  // Reset des méthodes sélectionnées quand la liste dispo change (retrait de pays).
   useEffect(() => {
     setSelectedPaymentMethods(prev =>
       prev.filter(id => availablePaymentMethods.some(pm => pm.id === id))
     )
-  }, [form.sellCountryCode, availablePaymentMethods])
+  }, [availablePaymentMethods])
+
+  function toggleSellCountry(code: string) {
+    setSellCountryCodes(prev => {
+      if (prev.includes(code)) {
+        // Empêche de tout décocher — au moins 1 requis
+        if (prev.length === 1) return prev
+        return prev.filter(c => c !== code)
+      }
+      return [...prev, code]
+    })
+  }
 
   // ── TravelKilo form ──
   const [tkForm, setTkForm] = useState({
@@ -115,6 +171,13 @@ export default function CreateOfferPage() {
     destinationCountryCode: '',
     notes: '',
   })
+
+  // Défaut Kilos/Fret : pays de départ = pays de l'utilisateur (destination reste vide).
+  useEffect(() => {
+    if (!user?.country || !countries?.some(c => c.code === user.country)) return
+    setTkForm(prev => prev.departureCountryCode ? prev : { ...prev, departureCountryCode: user.country })
+    setBsForm(prev => prev.departureCountryCode ? prev : { ...prev, departureCountryCode: user.country })
+  }, [user?.country, countries])
 
   const setF = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm(prev => ({ ...prev, [k]: e.target.value }))
@@ -188,8 +251,8 @@ export default function CreateOfferPage() {
   async function handleSubmitDevises(e: React.FormEvent) {
     e.preventDefault()
     setError('')
-    if (!form.sellCountryCode) {
-      setError(locale === 'fr' ? 'Sélectionnez un pays.' : 'Select a country.')
+    if (!sellCountryCodes.length) {
+      setError(locale === 'fr' ? 'Sélectionnez au moins un pays.' : 'Select at least one country.')
       return
     }
     if (form.rateMode === 'Fixed' && (!form.rate || Number(form.rate) <= 0)) {
@@ -203,8 +266,7 @@ export default function CreateOfferPage() {
     setLoading(true)
     try {
       await api.post<OfferDto>('/api/offers', {
-        sellCurrencyCode,
-        sellCountryCode: form.sellCountryCode,
+        sellCountryCodes,
         amount: Number(form.amount),
         rateMode: form.rateMode,
         rate: form.rateMode === 'Fixed' ? Number(form.rate) : null,
@@ -274,11 +336,11 @@ export default function CreateOfferPage() {
   ]
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-10">
+    <div className="max-w-5xl mx-auto px-4 py-10">
       <h1 className="text-3xl font-bold mb-6">{t('title')}</h1>
 
       {/* Category selector */}
-      <div className="mb-6">
+      <div className="mb-6 max-w-2xl">
         <label className="block text-sm font-medium mb-2">{t('category')}</label>
         <div className="grid grid-cols-3 gap-3">
           {CATEGORIES.map(cat => (
@@ -300,28 +362,89 @@ export default function CreateOfferPage() {
 
       {/* ── DEVISES FORM ── */}
       {category === 'devises' && (
-        <form onSubmit={handleSubmitDevises} className="bg-white border border-[--color-border] rounded-2xl p-8 space-y-6">
-          {/* Pays vendeur (impose la devise vendue) */}
+        <form onSubmit={handleSubmitDevises} className="bg-white border border-[--color-border] rounded-2xl p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-6">
+          {/* Colonne gauche : devise + pays de la zone */}
+          <div className="space-y-5">
+          {/* Étape 1 : picker de zone devise */}
           <div>
-            <label className="block text-sm font-medium mb-1.5">{t('sellCountry')}</label>
-            <select value={form.sellCountryCode} onChange={setF('sellCountryCode')} required className={SELECT_CLS}>
-              {africanCountries.map(c => (
-                <option key={c.code} value={c.code}>
-                  {locale === 'fr' ? c.nameFr : c.name} ({c.currencyCode})
-                </option>
-              ))}
-            </select>
+            <label className="block text-sm font-medium mb-2">{locale === 'fr' ? 'Devise vendue' : 'Currency to sell'}</label>
+            <div className="flex flex-wrap gap-2">
+              {currencyZones.map(zone => {
+                const isActive = zone.code === sellCurrencyCode
+                return (
+                  <button
+                    key={zone.code}
+                    type="button"
+                    onClick={() => switchCurrencyZone(zone.code)}
+                    aria-pressed={isActive}
+                    className="px-3.5 py-2 rounded-lg text-sm font-semibold transition-all"
+                    style={{
+                      border: `2px solid ${isActive ? '#0d9488' : '#e2e8f0'}`,
+                      background: isActive ? '#0d9488' : 'white',
+                      color: isActive ? 'white' : '#475569',
+                    }}
+                  >
+                    {zone.code}
+                  </button>
+                )
+              })}
+            </div>
           </div>
 
           {/* Récap : X → CAD */}
           {sellCurrencyCode && (
-            <div className="flex items-center gap-3 bg-[--color-primary-light] border border-[--color-primary] rounded-xl px-4 py-3 text-sm">
+            <div className="flex items-center gap-3 bg-[--color-primary-light] border border-[--color-primary] rounded-xl px-4 py-2.5 text-sm">
               <span className="font-semibold">{sellCurrencyCode}</span>
               <span className="text-[--color-muted-foreground]">{t('buyCurrencyLabel')}</span>
               <span className="font-semibold">CAD</span>
             </div>
           )}
 
+          {/* Étape 2 : pays de la zone (visible seulement si la zone en a plusieurs) */}
+          {visibleCountries.length > 1 && (
+            <div>
+              <div className="flex items-baseline justify-between mb-2">
+                <label className="block text-sm font-medium">{t('sellCountries')}</label>
+                <span className="text-xs" style={{ color: '#94a3b8' }}>
+                  {sellCountryCodes.length} / {visibleCountries.length}
+                </span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {visibleCountries.map(c => {
+                  const isSelected = sellCountryCodes.includes(c.code)
+                  return (
+                    <button
+                      key={c.code}
+                      type="button"
+                      onClick={() => toggleSellCountry(c.code)}
+                      aria-pressed={isSelected}
+                      className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all text-left"
+                      style={{
+                        border: `2px solid ${isSelected ? '#0d9488' : '#e2e8f0'}`,
+                        background: isSelected ? '#f0fdfa' : 'white',
+                        color: isSelected ? '#0f766e' : '#334155',
+                      }}
+                    >
+                      <span className="w-5 h-5 rounded flex items-center justify-center shrink-0"
+                        style={{
+                          border: `2px solid ${isSelected ? '#0d9488' : '#cbd5e1'}`,
+                          background: isSelected ? '#0d9488' : 'white',
+                        }}>
+                        {isSelected && <Check size={12} strokeWidth={3} color="white" />}
+                      </span>
+                      <span className="flex-1 truncate">
+                        {locale === 'fr' ? c.nameFr : c.name}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+          </div>
+
+          {/* Colonne droite : montants + rate + expiration */}
+          <div className="space-y-6">
           {/* Montant disponible */}
           <div>
             <label className="block text-sm font-medium mb-1.5">
@@ -401,7 +524,19 @@ export default function CreateOfferPage() {
             <input type="number" value={form.minAmount} onChange={setF('minAmount')} required min="1" className={INPUT_CLS} />
           </div>
 
+          <div>
+            <label className="block text-sm font-medium mb-1.5">{t('expiryHours')}</label>
+            <select value={form.expiryHours} onChange={setF('expiryHours')} className={SELECT_CLS}>
+              <option value="24">24h</option>
+              <option value="48">48h</option>
+              <option value="72">72h</option>
+              <option value="168">7 {locale === 'fr' ? 'jours' : 'days'}</option>
+            </select>
+          </div>
+          </div>
+
           {/* Moyens de paiement */}
+          <div className="lg:col-span-2">
           {availablePaymentMethods.length > 0 && (() => {
             const allIds = availablePaymentMethods.map(pm => pm.id)
             const allSelected = allIds.length > 0 && allIds.every(id => selectedPaymentMethods.includes(id))
@@ -444,7 +579,7 @@ export default function CreateOfferPage() {
                   </button>
 
                   {/* Liste individuelle — code couleur par marque */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                     {availablePaymentMethods.map(pm => {
                       const isSelected = selectedPaymentMethods.includes(pm.id)
                       const accent = paymentAccent(pm.name, pm.type)
@@ -490,23 +625,15 @@ export default function CreateOfferPage() {
               </div>
             )
           })()}
-
-          <div>
-            <label className="block text-sm font-medium mb-1.5">{t('expiryHours')}</label>
-            <select value={form.expiryHours} onChange={setF('expiryHours')} className={SELECT_CLS}>
-              <option value="24">24h</option>
-              <option value="48">48h</option>
-              <option value="72">72h</option>
-              <option value="168">7 {locale === 'fr' ? 'jours' : 'days'}</option>
-            </select>
           </div>
 
-          <div>
+          <div className="lg:col-span-2">
             <label className="block text-sm font-medium mb-1.5">{t('notes')}</label>
             <textarea value={form.notes} onChange={setF('notes')} rows={3} maxLength={500}
               className="w-full border border-[--color-border] rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[--color-primary] resize-none" />
           </div>
 
+          <div className="lg:col-span-2 space-y-4">
           {error && (
             <div className="text-sm rounded-lg p-3 border" style={{ color: '#ef4444', background: '#fef2f2', borderColor: '#fecaca' }}>
               {error}
@@ -522,13 +649,18 @@ export default function CreateOfferPage() {
           >
             {loading ? (locale === 'fr' ? 'Publication…' : 'Publishing…') : t('submit')}
           </button>
+          </div>
         </form>
       )}
 
       {/* ── TRAVEL KILO FORM ── */}
       {category === 'kilos' && (
-        <form onSubmit={handleSubmitTravelKilo} className="bg-white border border-[--color-border] rounded-2xl p-8 space-y-6">
-          <div className="grid grid-cols-2 gap-4">
+        <form onSubmit={handleSubmitTravelKilo} className="bg-white border border-[--color-border] rounded-2xl p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-6">
+          {/* Col gauche : départ */}
+          <div className="space-y-4">
+            <div className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#0d9488' }}>
+              {locale === 'fr' ? 'Départ' : 'Departure'}
+            </div>
             <div>
               <label className="block text-sm font-medium mb-1.5">{t('departureCountry')}</label>
               <select value={tkForm.departureCountryCode} onChange={setTk('departureCountryCode')} required className={SELECT_CLS}>
@@ -542,7 +674,11 @@ export default function CreateOfferPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          {/* Col droite : destination */}
+          <div className="space-y-4">
+            <div className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#0d9488' }}>
+              {locale === 'fr' ? 'Destination' : 'Destination'}
+            </div>
             <div>
               <label className="block text-sm font-medium mb-1.5">{t('destinationCountry')}</label>
               <select value={tkForm.destinationCountryCode} onChange={setTk('destinationCountryCode')} required className={SELECT_CLS}>
@@ -556,14 +692,14 @@ export default function CreateOfferPage() {
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-1.5">{t('travelDate')}</label>
-            <input type="date" value={tkForm.travelDate} onChange={setTk('travelDate')} required
-              min={new Date(Date.now() + 86400000).toISOString().split('T')[0]}
-              className={INPUT_CLS} />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+          {/* Date + kg + prix (3 cols pleine largeur) */}
+          <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-1.5">{t('travelDate')}</label>
+              <input type="date" value={tkForm.travelDate} onChange={setTk('travelDate')} required
+                min={new Date(Date.now() + 86400000).toISOString().split('T')[0]}
+                className={INPUT_CLS} />
+            </div>
             <div>
               <label className="block text-sm font-medium mb-1.5">{t('availableKg')}</label>
               <input type="number" value={tkForm.availableKg} onChange={setTk('availableKg')} required min="0.1" max="500" step="0.1" className={INPUT_CLS} />
@@ -574,34 +710,39 @@ export default function CreateOfferPage() {
             </div>
           </div>
 
-          <div>
+          <div className="lg:col-span-2">
             <label className="block text-sm font-medium mb-1.5">{t('notes')}</label>
             <textarea value={tkForm.notes} onChange={setTk('notes')} rows={3} maxLength={500}
               className="w-full border border-[--color-border] rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[--color-primary] resize-none" />
           </div>
 
-          {error && (
-            <div className="text-sm rounded-lg p-3 border" style={{ color: '#ef4444', background: '#fef2f2', borderColor: '#fecaca' }}>
-              {error}
-            </div>
-          )}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 text-[15px] font-bold text-white rounded-xl transition-colors disabled:opacity-60"
-            style={{ background: '#0d9488' }}
-            onMouseEnter={e => { if (!loading) e.currentTarget.style.background = '#0f766e' }}
-            onMouseLeave={e => { if (!loading) e.currentTarget.style.background = '#0d9488' }}
-          >
-            {loading ? (locale === 'fr' ? 'Publication…' : 'Publishing…') : t('submit')}
-          </button>
+          <div className="lg:col-span-2 space-y-4">
+            {error && (
+              <div className="text-sm rounded-lg p-3 border" style={{ color: '#ef4444', background: '#fef2f2', borderColor: '#fecaca' }}>
+                {error}
+              </div>
+            )}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 text-[15px] font-bold text-white rounded-xl transition-colors disabled:opacity-60"
+              style={{ background: '#0d9488' }}
+              onMouseEnter={e => { if (!loading) e.currentTarget.style.background = '#0f766e' }}
+              onMouseLeave={e => { if (!loading) e.currentTarget.style.background = '#0d9488' }}
+            >
+              {loading ? (locale === 'fr' ? 'Publication…' : 'Publishing…') : t('submit')}
+            </button>
+          </div>
         </form>
       )}
 
       {/* ── BOAT SHIPPING FORM ── */}
       {category === 'bateau' && (
-        <form onSubmit={handleSubmitBoatShipping} className="bg-white border border-[--color-border] rounded-2xl p-8 space-y-6">
-          <div className="grid grid-cols-2 gap-4">
+        <form onSubmit={handleSubmitBoatShipping} className="bg-white border border-[--color-border] rounded-2xl p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-6">
+          <div className="space-y-4">
+            <div className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#0d9488' }}>
+              {locale === 'fr' ? 'Départ' : 'Departure'}
+            </div>
             <div>
               <label className="block text-sm font-medium mb-1.5">{t('departureCountry')}</label>
               <select value={bsForm.departureCountryCode} onChange={setBs('departureCountryCode')} required className={SELECT_CLS}>
@@ -615,7 +756,10 @@ export default function CreateOfferPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-4">
+            <div className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#0d9488' }}>
+              {locale === 'fr' ? 'Destination' : 'Destination'}
+            </div>
             <div>
               <label className="block text-sm font-medium mb-1.5">{t('destinationCountry')}</label>
               <select value={bsForm.destinationCountryCode} onChange={setBs('destinationCountryCode')} required className={SELECT_CLS}>
@@ -629,14 +773,13 @@ export default function CreateOfferPage() {
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-1.5">{t('shipDepartureDate')}</label>
-            <input type="date" value={bsForm.shipDepartureDate} onChange={setBs('shipDepartureDate')} required
-              min={new Date(Date.now() + 86400000).toISOString().split('T')[0]}
-              className={INPUT_CLS} />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+          <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-1.5">{t('shipDepartureDate')}</label>
+              <input type="date" value={bsForm.shipDepartureDate} onChange={setBs('shipDepartureDate')} required
+                min={new Date(Date.now() + 86400000).toISOString().split('T')[0]}
+                className={INPUT_CLS} />
+            </div>
             <div>
               <label className="block text-sm font-medium mb-1.5">{t('availableLbs')}</label>
               <input type="number" value={bsForm.availableLbs} onChange={setBs('availableLbs')} required min="0.1" step="0.1" className={INPUT_CLS} />
@@ -647,27 +790,29 @@ export default function CreateOfferPage() {
             </div>
           </div>
 
-          <div>
+          <div className="lg:col-span-2">
             <label className="block text-sm font-medium mb-1.5">{t('notes')}</label>
             <textarea value={bsForm.notes} onChange={setBs('notes')} rows={3} maxLength={500}
               className="w-full border border-[--color-border] rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[--color-primary] resize-none" />
           </div>
 
-          {error && (
-            <div className="text-sm rounded-lg p-3 border" style={{ color: '#ef4444', background: '#fef2f2', borderColor: '#fecaca' }}>
-              {error}
-            </div>
-          )}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 text-[15px] font-bold text-white rounded-xl transition-colors disabled:opacity-60"
-            style={{ background: '#0d9488' }}
-            onMouseEnter={e => { if (!loading) e.currentTarget.style.background = '#0f766e' }}
-            onMouseLeave={e => { if (!loading) e.currentTarget.style.background = '#0d9488' }}
-          >
-            {loading ? (locale === 'fr' ? 'Publication…' : 'Publishing…') : t('submit')}
-          </button>
+          <div className="lg:col-span-2 space-y-4">
+            {error && (
+              <div className="text-sm rounded-lg p-3 border" style={{ color: '#ef4444', background: '#fef2f2', borderColor: '#fecaca' }}>
+                {error}
+              </div>
+            )}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 text-[15px] font-bold text-white rounded-xl transition-colors disabled:opacity-60"
+              style={{ background: '#0d9488' }}
+              onMouseEnter={e => { if (!loading) e.currentTarget.style.background = '#0f766e' }}
+              onMouseLeave={e => { if (!loading) e.currentTarget.style.background = '#0d9488' }}
+            >
+              {loading ? (locale === 'fr' ? 'Publication…' : 'Publishing…') : t('submit')}
+            </button>
+          </div>
         </form>
       )}
     </div>

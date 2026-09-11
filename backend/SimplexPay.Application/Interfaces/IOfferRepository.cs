@@ -28,7 +28,9 @@ public record OfferFilter(
     string? Search = null,
     decimal? MinAmount = null,
     decimal? MaxAmount = null,
-    IReadOnlyList<Guid>? PaymentMethodIds = null
+    IReadOnlyList<Guid>? PaymentMethodIds = null,
+    bool VerifiedOnly = false,
+    decimal? MinRating = null
 );
 
 public record PaymentMethodFacet(Guid Id, string Name, int Count);

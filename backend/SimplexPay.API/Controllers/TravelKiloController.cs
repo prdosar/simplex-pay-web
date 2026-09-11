@@ -23,17 +23,29 @@ public class TravelKiloController(IMediator mediator) : ControllerBase
         [FromQuery] string? departureCountryCode,
         [FromQuery] string? destinationCountryCode,
         [FromQuery] string? search,
+        [FromQuery] decimal? minKg,
+        [FromQuery] decimal? maxKg,
+        [FromQuery] string? sortBy,
+        [FromQuery] string? sortDir,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
+        [FromQuery] bool verifiedOnly = false,
+        [FromQuery] decimal? minRating = null,
         CancellationToken ct = default)
     {
         var result = await mediator.Send(new GetTravelKiloOffersQuery(
             DepartureCountryCode: departureCountryCode,
             DestinationCountryCode: destinationCountryCode,
             Search: search,
+            MinKg: minKg,
+            MaxKg: maxKg,
+            SortBy: sortBy,
+            SortDir: sortDir,
             Page: page,
             PageSize: pageSize,
-            IsAuthenticated: User.Identity?.IsAuthenticated ?? false
+            IsAuthenticated: User.Identity?.IsAuthenticated ?? false,
+            VerifiedOnly: verifiedOnly,
+            MinRating: minRating
         ), ct);
         return Ok(result);
     }
@@ -56,6 +68,38 @@ public class TravelKiloController(IMediator mediator) : ControllerBase
         ), ct);
         return Created($"/api/travel-kilo/{result.Id}", result);
     }
+
+    [HttpGet("me")]
+    [Authorize]
+    public async Task<IActionResult> GetMyOffers(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        CancellationToken ct = default)
+    {
+        var result = await mediator.Send(new GetMyTravelKiloOffersQuery(CurrentUserId, page, pageSize), ct);
+        return Ok(result);
+    }
+
+    [HttpPut("{id:guid}")]
+    [Authorize]
+    [RequireVerifiedEmail]
+    public async Task<IActionResult> UpdateOffer(Guid id, [FromBody] UpdateTravelKiloOfferRequest request, CancellationToken ct)
+    {
+        var result = await mediator.Send(new UpdateTravelKiloOfferCommand(
+            OfferId: id,
+            UserId: CurrentUserId,
+            AvailableKg: request.AvailableKg,
+            PricePerKg: request.PricePerKg,
+            TravelDate: request.TravelDate,
+            DepartureCity: request.DepartureCity,
+            DestinationCity: request.DestinationCity,
+            DepartureCountryCode: request.DepartureCountryCode,
+            DestinationCountryCode: request.DestinationCountryCode,
+            Notes: request.Notes,
+            Status: request.Status
+        ), ct);
+        return Ok(result);
+    }
 }
 
 public record CreateTravelKiloOfferRequest(
@@ -67,4 +111,16 @@ public record CreateTravelKiloOfferRequest(
     string DepartureCountryCode,
     string DestinationCountryCode,
     string? Notes
+);
+
+public record UpdateTravelKiloOfferRequest(
+    decimal AvailableKg,
+    decimal PricePerKg,
+    DateTime TravelDate,
+    string DepartureCity,
+    string DestinationCity,
+    string DepartureCountryCode,
+    string DestinationCountryCode,
+    string? Notes,
+    string Status
 );

@@ -61,4 +61,32 @@ public class TravelKiloOffer : BaseEntity
         Status = OfferStatus.Cancelled;
         MarkUpdated();
     }
+
+    public void Update(
+        decimal availableKg,
+        decimal pricePerKg,
+        DateTime travelDate,
+        string departureCity,
+        string destinationCity,
+        string departureCountryCode,
+        string destinationCountryCode,
+        string? notes,
+        OfferStatus status)
+    {
+        if (availableKg <= 0) throw new ArgumentException("Le poids disponible doit être positif.");
+        if (pricePerKg <= 0) throw new ArgumentException("Le prix par kilo doit être positif.");
+        // La date peut désormais être dans le passé (statut Filled/Cancelled) sans erreur.
+
+        AvailableKg = availableKg;
+        PricePerKg = pricePerKg;
+        TravelDate = travelDate;
+        DepartureCity = departureCity.Trim();
+        DestinationCity = destinationCity.Trim();
+        DepartureCountryCode = departureCountryCode.ToUpperInvariant();
+        DestinationCountryCode = destinationCountryCode.ToUpperInvariant();
+        Notes = notes;
+        ExpiresAt = travelDate;
+        Status = status;
+        MarkUpdated();
+    }
 }

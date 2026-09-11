@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import { flagUrl } from '@/lib/utils'
+import CreatorTrustBadges from './CreatorTrustBadges'
 import type { TravelKiloOfferDto } from '@/types/api'
 
 interface Props {
@@ -74,10 +75,14 @@ export default function TravelKiloCard({ offer, isAuthenticated, locale }: Props
           <div className="w-[26px] h-[26px] rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0" style={{ background: '#0d9488' }}>
             {offer.creatorFirstName[0]}
           </div>
-          <span className="text-[13px] font-semibold">{offer.creatorFirstName}</span>
-          {offer.creatorRating > 0 && (
-            <span className="text-xs" style={{ color: '#64748b' }}>★ {offer.creatorRating.toFixed(1)}</span>
-          )}
+          <CreatorTrustBadges
+            userId={offer.creatorId}
+            firstName={offer.creatorFirstName}
+            isCertified={offer.creatorIsCertified}
+            rating={offer.creatorRating}
+            reviewCount={offer.creatorReviewCount}
+            locale={locale}
+          />
         </div>
         {isAuthenticated ? (
           <span className="text-xs font-bold" style={{ color: '#0d9488' }}>{offer.creatorPhone}</span>

@@ -9,9 +9,15 @@ public record GetTravelKiloOffersQuery(
     string? DepartureCountryCode = null,
     string? DestinationCountryCode = null,
     string? Search = null,
+    decimal? MinKg = null,
+    decimal? MaxKg = null,
+    string? SortBy = null,
+    string? SortDir = null,
     int Page = 1,
     int PageSize = 20,
-    bool IsAuthenticated = false
+    bool IsAuthenticated = false,
+    bool VerifiedOnly = false,
+    decimal? MinRating = null
 ) : IRequest<PagedResult<TravelKiloOfferDto>>;
 
 public class GetTravelKiloOffersQueryHandler(ITravelKiloOfferRepository repo)
@@ -23,8 +29,14 @@ public class GetTravelKiloOffersQueryHandler(ITravelKiloOfferRepository repo)
             req.DepartureCountryCode,
             req.DestinationCountryCode,
             req.Search,
+            req.MinKg,
+            req.MaxKg,
+            req.SortBy,
+            req.SortDir,
             req.Page,
             Math.Min(req.PageSize, 50),
+            req.VerifiedOnly,
+            req.MinRating,
             ct);
 
         var dtos = items.Select(o => TravelKiloOfferDto.From(o, req.IsAuthenticated)).ToList();

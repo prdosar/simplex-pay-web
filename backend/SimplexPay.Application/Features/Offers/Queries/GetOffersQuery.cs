@@ -18,7 +18,9 @@ public record GetOffersQuery(
     string? Search = null,
     decimal? MinAmount = null,
     decimal? MaxAmount = null,
-    IReadOnlyList<Guid>? PaymentMethodIds = null
+    IReadOnlyList<Guid>? PaymentMethodIds = null,
+    bool VerifiedOnly = false,
+    decimal? MinRating = null
 ) : IRequest<PagedResult<OfferDto>>;
 
 public record PagedResult<T>(IList<T> Items, int Total, int Page, int PageSize)
@@ -45,7 +47,9 @@ public class GetOffersQueryHandler(IOfferRepository offerRepo)
             Search: req.Search,
             MinAmount: req.MinAmount,
             MaxAmount: req.MaxAmount,
-            PaymentMethodIds: req.PaymentMethodIds
+            PaymentMethodIds: req.PaymentMethodIds,
+            VerifiedOnly: req.VerifiedOnly,
+            MinRating: req.MinRating
         );
 
         var (items, total) = await offerRepo.GetPagedAsync(filter, ct);

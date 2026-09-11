@@ -18,7 +18,6 @@ public class OfferConfiguration : IEntityTypeConfiguration<Offer>
         builder.Property(o => o.SellCurrencyCode).HasMaxLength(5).IsRequired();
         builder.Property(o => o.BuyCurrencyCode).HasMaxLength(5).IsRequired();
         builder.Property(o => o.BuyCountryCode).HasMaxLength(3).IsRequired();
-        builder.Property(o => o.SellCountryCode).HasMaxLength(3).IsRequired();
         builder.Property(o => o.Type).HasConversion<string>();
         builder.Property(o => o.Status).HasConversion<string>();
         builder.Property(o => o.Notes).HasMaxLength(500);
@@ -41,11 +40,6 @@ public class OfferConfiguration : IEntityTypeConfiguration<Offer>
         builder.HasOne(o => o.BuyCountry)
             .WithMany()
             .HasForeignKey(o => o.BuyCountryCode)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.HasOne(o => o.SellCountry)
-            .WithMany()
-            .HasForeignKey(o => o.SellCountryCode)
             .OnDelete(DeleteBehavior.Restrict);
 
         // Index pour les requêtes fréquentes

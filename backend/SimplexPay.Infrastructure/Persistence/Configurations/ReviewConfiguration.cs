@@ -12,11 +12,6 @@ public class ReviewConfiguration : IEntityTypeConfiguration<Review>
         builder.Property(r => r.Rating).IsRequired();
         builder.Property(r => r.Comment).HasMaxLength(1000);
 
-        builder.HasOne(r => r.Transaction)
-            .WithMany()
-            .HasForeignKey(r => r.TransactionId)
-            .OnDelete(DeleteBehavior.Restrict);
-
         builder.HasOne(r => r.Reviewer)
             .WithMany()
             .HasForeignKey(r => r.ReviewerId)
@@ -27,6 +22,6 @@ public class ReviewConfiguration : IEntityTypeConfiguration<Review>
             .HasForeignKey(r => r.ReviewedUserId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasIndex(r => new { r.TransactionId, r.ReviewerId }).IsUnique();
+        builder.HasIndex(r => new { r.ReviewerId, r.ReviewedUserId }).IsUnique();
     }
 }

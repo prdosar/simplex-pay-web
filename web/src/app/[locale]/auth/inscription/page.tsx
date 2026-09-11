@@ -81,7 +81,6 @@ export default function RegisterPage() {
 
   const trustPoints = [
     tHome('hero.trust1'),
-    tHome('hero.trust2'),
     tHome('hero.trust3'),
   ]
 

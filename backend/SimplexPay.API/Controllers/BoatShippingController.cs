@@ -23,17 +23,29 @@ public class BoatShippingController(IMediator mediator) : ControllerBase
         [FromQuery] string? departureCountryCode,
         [FromQuery] string? destinationCountryCode,
         [FromQuery] string? search,
+        [FromQuery] decimal? minLbs,
+        [FromQuery] decimal? maxLbs,
+        [FromQuery] string? sortBy,
+        [FromQuery] string? sortDir,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
+        [FromQuery] bool verifiedOnly = false,
+        [FromQuery] decimal? minRating = null,
         CancellationToken ct = default)
     {
         var result = await mediator.Send(new GetBoatShippingOffersQuery(
             DepartureCountryCode: departureCountryCode,
             DestinationCountryCode: destinationCountryCode,
             Search: search,
+            MinLbs: minLbs,
+            MaxLbs: maxLbs,
+            SortBy: sortBy,
+            SortDir: sortDir,
             Page: page,
             PageSize: pageSize,
-            IsAuthenticated: User.Identity?.IsAuthenticated ?? false
+            IsAuthenticated: User.Identity?.IsAuthenticated ?? false,
+            VerifiedOnly: verifiedOnly,
+            MinRating: minRating
         ), ct);
         return Ok(result);
     }
@@ -56,6 +68,38 @@ public class BoatShippingController(IMediator mediator) : ControllerBase
         ), ct);
         return Created($"/api/boat-shipping/{result.Id}", result);
     }
+
+    [HttpGet("me")]
+    [Authorize]
+    public async Task<IActionResult> GetMyOffers(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        CancellationToken ct = default)
+    {
+        var result = await mediator.Send(new GetMyBoatShippingOffersQuery(CurrentUserId, page, pageSize), ct);
+        return Ok(result);
+    }
+
+    [HttpPut("{id:guid}")]
+    [Authorize]
+    [RequireVerifiedEmail]
+    public async Task<IActionResult> UpdateOffer(Guid id, [FromBody] UpdateBoatShippingOfferRequest request, CancellationToken ct)
+    {
+        var result = await mediator.Send(new UpdateBoatShippingOfferCommand(
+            OfferId: id,
+            UserId: CurrentUserId,
+            AvailableLbs: request.AvailableLbs,
+            PricePerLb: request.PricePerLb,
+            ShipDepartureDate: request.ShipDepartureDate,
+            DeparturePort: request.DeparturePort,
+            DestinationPort: request.DestinationPort,
+            DepartureCountryCode: request.DepartureCountryCode,
+            DestinationCountryCode: request.DestinationCountryCode,
+            Notes: request.Notes,
+            Status: request.Status
+        ), ct);
+        return Ok(result);
+    }
 }
 
 public record CreateBoatShippingOfferRequest(
@@ -67,4 +111,16 @@ public record CreateBoatShippingOfferRequest(
     string DepartureCountryCode,
     string DestinationCountryCode,
     string? Notes
+);
+
+public record UpdateBoatShippingOfferRequest(
+    decimal AvailableLbs,
+    decimal PricePerLb,
+    DateTime ShipDepartureDate,
+    string DeparturePort,
+    string DestinationPort,
+    string DepartureCountryCode,
+    string DestinationCountryCode,
+    string? Notes,
+    string Status
 );

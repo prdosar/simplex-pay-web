@@ -7,8 +7,7 @@ import { useTranslations, useLocale } from 'next-intl'
 import { api } from '@/lib/api'
 import { flagUrl } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
-import { useDisplayRate } from '@/lib/useDailyRate'
-import type { OfferDto } from '@/types/api'
+import type { OfferDto, PagedResult, ReviewDto } from '@/types/api'
 
 export default function OfferDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -19,6 +18,12 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
   const { data: offer, isLoading, error } = useSWR<OfferDto>(
     `/api/offers/${id}`,
     (url: string) => api.get<OfferDto>(url)
+  )
+
+  const creatorId = offer?.creator.id
+  const { data: reviews } = useSWR<PagedResult<ReviewDto>>(
+    creatorId ? `/api/users/${creatorId}/reviews?page=1&pageSize=3` : null,
+    (url: string) => api.get<PagedResult<ReviewDto>>(url)
   )
 
   if (isLoading) return (
@@ -40,19 +45,6 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
   const fromMethods = offer.paymentMethods.filter(pm => pm.side === 'From')
   const toMethods = offer.paymentMethods.filter(pm => pm.side === 'To')
 
-  const { value: rateValue, sourceLabel } = useDisplayRate(
-    offer.rateMode,
-    offer.rate,
-    offer.sellCurrency,
-    offer.buyCurrency
-  )
-  const rateSourceLabel =
-    sourceLabel === 'Fixed'
-      ? null
-      : sourceLabel === 'Google'
-        ? (locale === 'fr' ? 'Taux Google du jour' : 'Google daily rate')
-        : (locale === 'fr' ? 'Taux XE du jour' : 'XE daily rate')
-
   return (
     <div className="max-w-3xl mx-auto px-4 py-10">
       <Link href={`/${locale}/offres`} className="text-sm text-[--color-muted-foreground] hover:text-[--color-primary] flex items-center gap-1 mb-6">
@@ -60,35 +52,49 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
       </Link>
 
       <div className="bg-white border border-[--color-border] rounded-2xl overflow-hidden">
-        {/* Header */}
+        {/* Header. Multi-pays vendeurs (UEMOA/CEMAC) : liste de drapeaux + codes. */}
         <div className="bg-gradient-to-br from-[--color-primary] to-[--color-primary-dark] p-6 text-white">
           <div className="flex items-center gap-3 mb-3">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={flagUrl(offer.sellCountry)} alt={offer.sellCountry} className="w-14 h-10 rounded object-cover shrink-0 shadow" />
+            <span className="flex items-center -space-x-2 shrink-0">
+              {offer.sellCountries.slice(0, 4).map(code => (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img key={code} src={flagUrl(code)} alt={code}
+                  className="w-14 h-10 rounded object-cover shadow ring-2 ring-white/40" />
+              ))}
+            </span>
             <div>
               <p className="text-3xl font-bold">{offer.sellCurrency} → {offer.buyCurrency}</p>
-              <p className="text-white/80 text-sm mt-1 flex items-center gap-1.5">
+              <p className="text-white/80 text-sm mt-1 flex items-center gap-1.5 flex-wrap">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={flagUrl(offer.buyCountry)} alt={offer.buyCountry} className="w-5 h-3.5 rounded-sm object-cover" />
                 {offer.buyCountry}
                 <span>↔</span>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={flagUrl(offer.sellCountry)} alt={offer.sellCountry} className="w-5 h-3.5 rounded-sm object-cover" />
-                {offer.sellCountry}
+                {offer.sellCountries.map(code => (
+                  <span key={code} className="inline-flex items-center gap-1">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={flagUrl(code)} alt={code} className="w-5 h-3.5 rounded-sm object-cover" />
+                    {code}
+                  </span>
+                ))}
               </p>
             </div>
           </div>
-          <div className="text-4xl font-bold mt-4">
-            {rateValue !== null
-              ? rateValue.toLocaleString(locale, { maximumFractionDigits: 2 })
-              : '—'
-            }
-            <span className="text-xl font-normal text-white/80 ml-2">
-              {offer.sellCurrencySymbol}/{offer.buyCurrencySymbol}
-            </span>
-          </div>
-          {rateSourceLabel && (
-            <p className="text-sm text-white/80 mt-1">{rateSourceLabel}</p>
+          {/* Taux : afficher l'offre TELLE QUE saisie. Pas de conversion pour Google/XE. */}
+          {offer.rateMode === 'Fixed' ? (
+            <div className="text-4xl font-bold mt-4">
+              {offer.rate !== null
+                ? offer.rate.toLocaleString(locale, { maximumFractionDigits: 2 })
+                : '—'}
+              <span className="text-xl font-normal text-white/80 ml-2">
+                {offer.sellCurrencySymbol}/{offer.buyCurrencySymbol}
+              </span>
+            </div>
+          ) : (
+            <div className="text-2xl font-bold mt-4 text-white/95">
+              {offer.rateMode === 'GoogleDaily'
+                ? (locale === 'fr' ? 'Taux Google du jour' : 'Google daily rate')
+                : (locale === 'fr' ? 'Taux XE du jour' : 'XE daily rate')}
+            </div>
           )}
         </div>
 
@@ -105,14 +111,15 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
             </div>
           </div>
 
-          {/* Equivalent — uniquement si on connaît le taux */}
-          {rateValue !== null && rateValue > 0 && (
+          {/* Équivalent — uniquement quand le vendeur a fixé un taux explicite (Fixed).
+              Pour Google/XE, aucune conversion : le taux fluctue et n'engage pas le vendeur. */}
+          {offer.rateMode === 'Fixed' && offer.rate !== null && offer.rate > 0 && (
             <div className="bg-[--color-muted] rounded-xl p-4 mb-6">
               <p className="text-sm text-[--color-muted-foreground]">
                 {t('buyEquivalent', { currency: offer.buyCurrency })}
               </p>
               <p className="text-2xl font-bold text-[--color-primary]">
-                {offer.buyCurrencySymbol} {(offer.amount / rateValue).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                {offer.buyCurrencySymbol} {(offer.amount / offer.rate).toLocaleString(undefined, { maximumFractionDigits: 2 })}
               </p>
             </div>
           )}
@@ -159,17 +166,48 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
           <div>
             <p className="text-xs text-[--color-muted-foreground] uppercase tracking-wide mb-3">{t('creator')}</p>
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-full bg-[--color-primary] text-white text-lg flex items-center justify-center font-bold">
+              <div className="w-12 h-12 rounded-full bg-[--color-primary] text-white text-lg flex items-center justify-center font-bold shrink-0">
                 {offer.creator.firstName[0]}
               </div>
-              <div>
-                <p className="font-semibold">
-                  {offer.creator.firstName} {offer.creator.lastName ?? ''}
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Link
+                    href={`/${locale}/profil/${offer.creator.id}`}
+                    className="font-semibold hover:underline"
+                    style={{ color: '#0f172a' }}
+                  >
+                    {offer.creator.firstName} {offer.creator.lastName ?? ''}
+                  </Link>
+                  {offer.creator.isCertified && (
+                    <span
+                      title={locale === 'fr' ? 'Utilisateur certifié' : 'Certified user'}
+                      className="inline-flex items-center gap-1 text-xs font-bold px-2 py-[3px] rounded-full"
+                      style={{ background: '#ccfbf1', color: '#0f766e' }}
+                    >
+                      <svg viewBox="0 0 24 24" fill="currentColor" className="w-3 h-3">
+                        <path d="M12 2l2.6 2.3 3.5-.5.5 3.5L21 10l-2.4 2.6.5 3.5-3.5.5L13 21l-2.6-2.4-3.5.5-.5-3.5L4 13l2.4-2.6-.5-3.5 3.5-.5L12 2zm-1.2 12.6l6.4-6.4-1.4-1.4-5 5-2.4-2.4-1.4 1.4 3.8 3.8z" />
+                      </svg>
+                      {locale === 'fr' ? 'Certifié' : 'Certified'}
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm text-[--color-muted-foreground] flex items-center gap-1.5 flex-wrap">
+                  {offer.creator.reviewCount > 0 ? (
+                    <>
+                      <span style={{ color: '#f59e0b' }}>★ {offer.creator.rating.toFixed(1)}</span>
+                      <span>({offer.creator.reviewCount} {locale === 'fr' ? 'avis' : 'reviews'})</span>
+                    </>
+                  ) : (
+                    <span className="italic">{locale === 'fr' ? 'Aucun avis' : 'No reviews yet'}</span>
+                  )}
                 </p>
-                <p className="text-sm text-[--color-muted-foreground]">
-                  {offer.creator.transactionCount} {t('transactions')}
-                  {offer.creator.rating > 0 && ` · ⭐ ${offer.creator.rating.toFixed(1)}`}
-                </p>
+                <Link
+                  href={`/${locale}/profil/${offer.creator.id}`}
+                  className="inline-flex items-center gap-1 mt-2 text-xs font-semibold hover:underline"
+                  style={{ color: '#0d9488' }}
+                >
+                  {locale === 'fr' ? 'Voir le profil et laisser un avis →' : 'View profile and leave a review →'}
+                </Link>
               </div>
             </div>
 
@@ -209,6 +247,68 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
             )}
           </div>
         </div>
+      </div>
+
+      {/* Reviews about the seller (toujours visible, 3 derniers + lien profil) */}
+      <div className="mt-6 bg-white border rounded-2xl p-6" style={{ borderColor: '#e2e8f0' }}>
+        <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
+          <h2 className="text-lg font-bold" style={{ color: '#0f172a' }}>
+            {locale === 'fr' ? `Avis sur ${offer.creator.firstName}` : `Reviews about ${offer.creator.firstName}`}
+          </h2>
+          <div className="flex items-center gap-3 text-sm">
+            {offer.creator.reviewCount > 0 ? (
+              <span className="flex items-center gap-1" style={{ color: '#0f172a' }}>
+                <span className="text-base" style={{ color: '#f59e0b' }}>★</span>
+                <span className="font-bold">{offer.creator.rating.toFixed(1)}</span>
+                <span style={{ color: '#64748b' }}>· {offer.creator.reviewCount} {locale === 'fr' ? (offer.creator.reviewCount > 1 ? 'avis' : 'avis') : (offer.creator.reviewCount > 1 ? 'reviews' : 'review')}</span>
+              </span>
+            ) : (
+              <span className="italic" style={{ color: '#94a3b8' }}>
+                {locale === 'fr' ? 'Aucun avis pour l’instant' : 'No reviews yet'}
+              </span>
+            )}
+            <Link
+              href={`/${locale}/profil/${offer.creator.id}`}
+              className="font-semibold hover:underline"
+              style={{ color: '#0d9488' }}
+            >
+              {reviews && reviews.total > 3
+                ? (locale === 'fr' ? `Voir les ${reviews.total} avis →` : `See all ${reviews.total} →`)
+                : (locale === 'fr' ? 'Laisser un avis →' : 'Leave a review →')}
+            </Link>
+          </div>
+        </div>
+
+        {reviews && reviews.items.length > 0 ? (
+          <ul className="space-y-4">
+            {reviews.items.map(r => (
+              <li key={r.id} className="border-b pb-4 last:border-b-0 last:pb-0" style={{ borderColor: '#f1f5f9' }}>
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0" style={{ background: '#64748b' }}>
+                    {r.reviewerFirstName[0]}
+                  </div>
+                  <span className="text-sm font-semibold" style={{ color: '#0f172a' }}>{r.reviewerFirstName}</span>
+                  <span className="text-xs" style={{ color: '#94a3b8' }}>·</span>
+                  <span className="text-xs" style={{ color: '#94a3b8' }}>{new Date(r.createdAt).toLocaleDateString(locale === 'fr' ? 'fr' : 'en')}</span>
+                </div>
+                <div className="flex items-center gap-0.5 mb-1.5" style={{ color: '#f59e0b' }}>
+                  {[1, 2, 3, 4, 5].map(n => (
+                    <span key={n} className="text-sm">{n <= r.rating ? '★' : '☆'}</span>
+                  ))}
+                </div>
+                {r.comment && (
+                  <p className="text-sm leading-relaxed" style={{ color: '#334155' }}>{r.comment}</p>
+                )}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm italic py-2" style={{ color: '#94a3b8' }}>
+            {locale === 'fr'
+              ? 'Aucun avis pour ce vendeur. Sois le premier à laisser un avis via son profil.'
+              : 'No reviews for this seller yet. Be the first to leave one via their profile.'}
+          </p>
+        )}
       </div>
     </div>
   )

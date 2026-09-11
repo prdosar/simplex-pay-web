@@ -47,14 +47,18 @@ export default function Footer() {
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.06em] mb-4" style={{ color: '#64748b' }}>{t('legal')}</p>
             <div className="flex flex-col gap-2.5">
-              <Link href="#" className="text-sm hover:text-white transition-colors" style={{ color: '#cbd5e1' }}>{t('terms')}</Link>
+              <Link href={`/${locale}/mentions-legales`} className="text-sm hover:text-white transition-colors" style={{ color: '#cbd5e1' }}>{t('terms')}</Link>
               <Link href="#" className="text-sm hover:text-white transition-colors" style={{ color: '#cbd5e1' }}>{t('privacy')}</Link>
-              <Link href="#" className="text-sm hover:text-white transition-colors" style={{ color: '#cbd5e1' }}>{t('tos')}</Link>
+              <Link href={`/${locale}/conditions-utilisation`} className="text-sm hover:text-white transition-colors" style={{ color: '#cbd5e1' }}>{t('tos')}</Link>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center justify-between flex-wrap gap-3 pt-6" style={{ borderTop: '1px solid #1e293b' }}>
+        <p className="text-xs leading-relaxed mb-4 pt-6 max-w-[900px]" style={{ color: '#94a3b8', borderTop: '1px solid #1e293b' }}>
+          {t('disclaimer')}
+        </p>
+
+        <div className="flex items-center justify-between flex-wrap gap-3 pt-4" style={{ borderTop: '1px solid #1e293b' }}>
           <p className="text-sm" style={{ color: '#64748b' }}>{t('copyright')}</p>
           <Link
             href={`/${otherLocale}`}

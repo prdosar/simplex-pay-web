@@ -666,11 +666,6 @@ namespace SimplexPay.Infrastructure.Persistence.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
-                    b.Property<string>("SellCountryCode")
-                        .IsRequired()
-                        .HasMaxLength(3)
-                        .HasColumnType("character varying(3)");
-
                     b.Property<string>("SellCurrencyCode")
                         .IsRequired()
                         .HasMaxLength(5)
@@ -696,8 +691,6 @@ namespace SimplexPay.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("BuyCurrencyCode");
 
-                    b.HasIndex("SellCountryCode");
-
                     b.HasIndex("UserId");
 
                     b.HasIndex("Type", "Status");
@@ -705,6 +698,22 @@ namespace SimplexPay.Infrastructure.Persistence.Migrations
                     b.HasIndex("SellCurrencyCode", "BuyCurrencyCode", "Status");
 
                     b.ToTable("Offers");
+                });
+
+            modelBuilder.Entity("SimplexPay.Domain.Entities.OfferCountry", b =>
+                {
+                    b.Property<Guid>("OfferId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CountryCode")
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
+                    b.HasKey("OfferId", "CountryCode");
+
+                    b.HasIndex("CountryCode");
+
+                    b.ToTable("OfferCountries");
                 });
 
             modelBuilder.Entity("SimplexPay.Domain.Entities.OfferPaymentMethod", b =>
@@ -976,9 +985,6 @@ namespace SimplexPay.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("ReviewerId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("TransactionId")
-                        .HasColumnType("uuid");
-
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -986,9 +992,7 @@ namespace SimplexPay.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("ReviewedUserId");
 
-                    b.HasIndex("ReviewerId");
-
-                    b.HasIndex("TransactionId", "ReviewerId")
+                    b.HasIndex("ReviewerId", "ReviewedUserId")
                         .IsUnique();
 
                     b.ToTable("Reviews");
@@ -1276,6 +1280,9 @@ namespace SimplexPay.Infrastructure.Persistence.Migrations
                     b.Property<bool>("IsAdmin")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsCertified")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -1293,6 +1300,9 @@ namespace SimplexPay.Infrastructure.Persistence.Migrations
                     b.Property<decimal>("Rating")
                         .HasPrecision(3, 2)
                         .HasColumnType("numeric(3,2)");
+
+                    b.Property<int>("ReviewCount")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -1386,12 +1396,6 @@ namespace SimplexPay.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("SimplexPay.Domain.Entities.Country", "SellCountry")
-                        .WithMany()
-                        .HasForeignKey("SellCountryCode")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("SimplexPay.Domain.Entities.SupportedCurrency", "SellCurrency")
                         .WithMany()
                         .HasForeignKey("SellCurrencyCode")
@@ -1408,11 +1412,28 @@ namespace SimplexPay.Infrastructure.Persistence.Migrations
 
                     b.Navigation("BuyCurrency");
 
-                    b.Navigation("SellCountry");
-
                     b.Navigation("SellCurrency");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("SimplexPay.Domain.Entities.OfferCountry", b =>
+                {
+                    b.HasOne("SimplexPay.Domain.Entities.Country", "Country")
+                        .WithMany()
+                        .HasForeignKey("CountryCode")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SimplexPay.Domain.Entities.Offer", "Offer")
+                        .WithMany("Countries")
+                        .HasForeignKey("OfferId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Country");
+
+                    b.Navigation("Offer");
                 });
 
             modelBuilder.Entity("SimplexPay.Domain.Entities.OfferPaymentMethod", b =>
@@ -1459,17 +1480,9 @@ namespace SimplexPay.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("SimplexPay.Domain.Entities.Transaction", "Transaction")
-                        .WithMany()
-                        .HasForeignKey("TransactionId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.Navigation("ReviewedUser");
 
                     b.Navigation("Reviewer");
-
-                    b.Navigation("Transaction");
                 });
 
             modelBuilder.Entity("SimplexPay.Domain.Entities.Transaction", b =>
@@ -1533,6 +1546,8 @@ namespace SimplexPay.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("SimplexPay.Domain.Entities.Offer", b =>
                 {
+                    b.Navigation("Countries");
+
                     b.Navigation("PaymentMethods");
 
                     b.Navigation("Transactions");

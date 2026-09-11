@@ -11,8 +11,10 @@ export interface AdminUserDto {
   phoneNumber?: string
   country: string
   status: string
+  isCertified: boolean
   transactionCount: number
   rating: number
+  reviewCount: number
   whatsAppNumber?: string
   createdAt: string
   isAdmin?: boolean

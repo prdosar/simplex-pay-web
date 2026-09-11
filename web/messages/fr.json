@@ -17,9 +17,12 @@
       "ctaView": "Voir les offres",
       "ctaPost": "Publier une offre",
       "trust1": "Inscription gratuite",
-      "trust2": "Paiement direct, sans frais cachés",
       "trust3": "Profils et avis vérifiés",
       "cta": "Voir les offres"
+    },
+    "disclaimer": {
+      "title": "SimplexPay est une plateforme de mise en relation",
+      "body": "Aucune transaction n'est effectuée directement sur le site. Les échanges se font entre particuliers, en dehors de la plateforme. SimplexPay ne détient aucun fonds et n'est pas responsable des offres publiées, de leur exécution, ni des utilisateurs qui les publient. Vérifiez toujours l'identité et les avis avant tout paiement."
     },
     "tabs": {
       "devises": "Devises",
@@ -28,6 +31,14 @@
     },
     "currencies": {
       "title": "Devises disponibles"
+    },
+    "trust": {
+      "label": "Confiance",
+      "verifiedOnly": "Utilisateurs certifiés uniquement",
+      "minRating": "Note minimum",
+      "minRatingAria": "Filtrer à partir de {n} étoiles",
+      "minRatingValue": "Au moins {n} ★",
+      "noRatingFilter": "Toutes les notes"
     },
     "offers": {
       "sectionTitle": "Offres en ce moment",
@@ -54,6 +65,12 @@
       "departureLabel": "Pays de départ",
       "destinationLabel": "Pays de destination",
       "allCountries": "Tous les pays",
+      "sortLabel": "Trier par",
+      "sortRecent": "Plus récentes",
+      "sortPriceAsc": "Prix / kg croissant ↑",
+      "sortPriceDesc": "Prix / kg décroissant ↓",
+      "sortKgDesc": "Plus de kilos disponibles",
+      "kgLabel": "Kilos disponibles",
       "cardDate": "Date de voyage",
       "cardKg": "Kilos disponibles",
       "cardPrice": "Prix / kg",
@@ -68,6 +85,12 @@
       "departureLabel": "Pays de départ",
       "destinationLabel": "Pays de destination",
       "allCountries": "Tous les pays",
+      "sortLabel": "Trier par",
+      "sortRecent": "Plus récentes",
+      "sortPriceAsc": "Prix / livre croissant ↑",
+      "sortPriceDesc": "Prix / livre décroissant ↓",
+      "sortLbsDesc": "Plus de livres disponibles",
+      "lbsLabel": "Livres disponibles",
       "cardDate": "Date départ bateau",
       "cardLbs": "Livres disponibles",
       "cardPrice": "Prix / livre",
@@ -108,6 +131,7 @@
     "terms": "Mentions légales",
     "privacy": "Confidentialité",
     "tos": "Conditions d'utilisation",
+    "disclaimer": "SimplexPay met en relation des particuliers. Aucune transaction n'est effectuée sur la plateforme. Nous ne sommes pas responsables des offres publiées par les utilisateurs.",
     "copyright": "© 2026 SimplexPay. Fait pour la diaspora africaine."
   },
   "offers": {
@@ -201,6 +225,9 @@
     "categoryBateau": "Fret Bateau",
     "sellCurrency": "Devise que je vends",
     "sellCountry": "Pays de la devise vendue",
+    "sellCountries": "Pays où votre offre est disponible",
+    "sellCountriesHint": "Devise {currency} — cochez les pays UEMOA/CEMAC compatibles",
+    "sellCountriesHintEmpty": "Le 1er pays coché impose la devise",
     "buyCurrencyLabel": "Contre",
     "amount": "Montant disponible",
     "rateMode": "Taux de change proposé",
@@ -256,5 +283,31 @@
     "close": "Fermer",
     "yes": "Oui",
     "no": "Non"
+  },
+  "profile": {
+    "notFound": "Utilisateur introuvable.",
+    "backHome": "Retour à l'accueil",
+    "certified": "Certifié",
+    "certifiedTooltip": "Utilisateur certifié par SimplexPay",
+    "memberSince": "Membre depuis {date}",
+    "reviewCount": "{count, plural, one {avis} other {avis}}",
+    "noReviewsYet": "Aucun avis pour le moment",
+    "verifyToReview": "Vérifie ton email avant de laisser un avis.",
+    "loginToReview": "Connecte-toi pour laisser un avis",
+    "reviewsTitle": "Avis reçus",
+    "empty": "Cet utilisateur n'a pas encore reçu d'avis.",
+    "edited": "modifié",
+    "pageInfo": "Page {page} / {total}",
+    "newReviewFor": "Laisser un avis sur {name}",
+    "editReviewFor": "Modifier ton avis sur {name}",
+    "formHelp": "Attribue une note et un commentaire optionnel. Tu peux modifier ton avis à tout moment.",
+    "commentPlaceholder": "Décris brièvement ton expérience (optionnel)",
+    "ratingLabel": "{n} étoile(s)",
+    "submitBtn": "Publier mon avis",
+    "updateBtn": "Mettre à jour mon avis",
+    "submitting": "Envoi…",
+    "savedOk": "Avis enregistré.",
+    "errorRating": "Choisis une note entre 1 et 5.",
+    "errorGeneric": "Une erreur est survenue. Réessaie."
   }
 }

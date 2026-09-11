@@ -9,8 +9,9 @@ export default function UsersPage() {
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [pending, setPending] = useState<Set<string>>(new Set())
 
-  const { data, isLoading } = useSWR<PagedResult<AdminUserDto>>(
+  const { data, isLoading, mutate } = useSWR<PagedResult<AdminUserDto>>(
     `/api/admin/users?pageNumber=${page}&pageSize=20${debouncedSearch ? `&search=${debouncedSearch}` : ''}`,
     (url: string) => api.get<PagedResult<AdminUserDto>>(url)
   )
@@ -20,6 +21,33 @@ export default function UsersPage() {
     const val = e.target.value
     setTimeout(() => setDebouncedSearch(val), 300)
     setPage(1)
+  }
+
+  async function toggleCertified(user: AdminUserDto) {
+    const next = !user.isCertified
+    setPending(prev => new Set(prev).add(user.id))
+    // Optimistic update
+    mutate(current => current && ({
+      ...current,
+      items: current.items.map(u => u.id === user.id ? { ...u, isCertified: next } : u),
+    }), false)
+    try {
+      await api.patch(`/api/admin/users/${user.id}/certify`, { isCertified: next })
+      mutate()
+    } catch {
+      // Rollback on failure
+      mutate(current => current && ({
+        ...current,
+        items: current.items.map(u => u.id === user.id ? { ...u, isCertified: !next } : u),
+      }), false)
+      alert('Échec de la certification. Réessaie.')
+    } finally {
+      setPending(prev => {
+        const s = new Set(prev)
+        s.delete(user.id)
+        return s
+      })
+    }
   }
 
   return (
@@ -53,8 +81,9 @@ export default function UsersPage() {
               <th className="text-left px-6 py-3 font-medium text-[--color-muted-foreground]">Utilisateur</th>
               <th className="text-left px-6 py-3 font-medium text-[--color-muted-foreground]">Pays</th>
               <th className="text-left px-6 py-3 font-medium text-[--color-muted-foreground]">Statut</th>
-              <th className="text-right px-6 py-3 font-medium text-[--color-muted-foreground]">Transactions</th>
+              <th className="text-center px-6 py-3 font-medium text-[--color-muted-foreground]">Certifié</th>
               <th className="text-right px-6 py-3 font-medium text-[--color-muted-foreground]">Note</th>
+              <th className="text-right px-6 py-3 font-medium text-[--color-muted-foreground]">Avis</th>
               <th className="text-right px-6 py-3 font-medium text-[--color-muted-foreground]">Inscrit le</th>
             </tr>
           </thead>
@@ -65,14 +94,15 @@ export default function UsersPage() {
                   <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-40" /></td>
                   <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-12" /></td>
                   <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-16" /></td>
-                  <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-8 ml-auto" /></td>
+                  <td className="px-6 py-4"><div className="h-6 bg-gray-200 rounded w-14 mx-auto" /></td>
                   <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-10 ml-auto" /></td>
+                  <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-8 ml-auto" /></td>
                   <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-24 ml-auto" /></td>
                 </tr>
               ))
             ) : data?.items.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-6 py-12 text-center text-[--color-muted-foreground]">
+                <td colSpan={7} className="px-6 py-12 text-center text-[--color-muted-foreground]">
                   Aucun utilisateur trouvé
                 </td>
               </tr>
@@ -85,7 +115,12 @@ export default function UsersPage() {
                         {user.firstName[0]}
                       </div>
                       <div>
-                        <p className="font-medium text-slate-900">{user.firstName} {user.lastName}</p>
+                        <p className="font-medium text-slate-900 flex items-center gap-1.5">
+                          {user.firstName} {user.lastName}
+                          {user.isCertified && (
+                            <span title="Utilisateur certifié" className="text-[--color-primary]">✓</span>
+                          )}
+                        </p>
                         <p className="text-xs text-[--color-muted-foreground]">{user.email}</p>
                       </div>
                     </div>
@@ -100,10 +135,24 @@ export default function UsersPage() {
                       {user.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-right text-slate-900">{user.transactionCount}</td>
-                  <td className="px-6 py-4 text-right">
-                    {user.rating > 0 ? `⭐ ${user.rating.toFixed(1)}` : '—'}
+                  <td className="px-6 py-4 text-center">
+                    <button
+                      onClick={() => toggleCertified(user)}
+                      disabled={pending.has(user.id)}
+                      className={`text-xs px-3 py-1 rounded-full font-medium transition-colors disabled:opacity-50 ${
+                        user.isCertified
+                          ? 'bg-teal-100 text-teal-700 hover:bg-teal-200'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                      title={user.isCertified ? 'Cliquer pour décertifier' : 'Cliquer pour certifier'}
+                    >
+                      {user.isCertified ? '✓ Certifié' : 'Certifier'}
+                    </button>
                   </td>
+                  <td className="px-6 py-4 text-right">
+                    {user.reviewCount > 0 ? `⭐ ${user.rating.toFixed(1)}` : '—'}
+                  </td>
+                  <td className="px-6 py-4 text-right text-slate-900">{user.reviewCount}</td>
                   <td className="px-6 py-4 text-right text-[--color-muted-foreground]">
                     {new Date(user.createdAt).toLocaleDateString('fr-CA')}
                   </td>

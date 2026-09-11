@@ -12,6 +12,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<PaymentMethod> PaymentMethods => Set<PaymentMethod>();
     public DbSet<CountryPaymentMethod> CountryPaymentMethods => Set<CountryPaymentMethod>();
     public DbSet<Offer> Offers => Set<Offer>();
+    public DbSet<OfferCountry> OfferCountries => Set<OfferCountry>();
     public DbSet<OfferPaymentMethod> OfferPaymentMethods => Set<OfferPaymentMethod>();
     public DbSet<TravelKiloOffer> TravelKiloOffers => Set<TravelKiloOffer>();
     public DbSet<BoatShippingOffer> BoatShippingOffers => Set<BoatShippingOffer>();

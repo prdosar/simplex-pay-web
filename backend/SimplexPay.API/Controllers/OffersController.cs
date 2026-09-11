@@ -34,6 +34,8 @@ public class OffersController(IMediator mediator) : ControllerBase
         [FromQuery] decimal? minAmount = null,
         [FromQuery] decimal? maxAmount = null,
         [FromQuery] List<Guid>? paymentMethodIds = null,
+        [FromQuery] bool verifiedOnly = false,
+        [FromQuery] decimal? minRating = null,
         CancellationToken ct = default)
     {
         var query = new GetOffersQuery(
@@ -50,7 +52,9 @@ public class OffersController(IMediator mediator) : ControllerBase
             Search: search,
             MinAmount: minAmount,
             MaxAmount: maxAmount,
-            PaymentMethodIds: paymentMethodIds
+            PaymentMethodIds: paymentMethodIds,
+            VerifiedOnly: verifiedOnly,
+            MinRating: minRating
         );
 
         var result = await mediator.Send(query, ct);
@@ -106,8 +110,7 @@ public class OffersController(IMediator mediator) : ControllerBase
     {
         var command = new CreateOfferCommand(
             UserId: CurrentUserId,
-            SellCurrencyCode: request.SellCurrencyCode,
-            SellCountryCode: request.SellCountryCode,
+            SellCountryCodes: request.SellCountryCodes ?? [],
             Amount: request.Amount,
             RateMode: request.RateMode,
             Rate: request.Rate,
@@ -130,11 +133,52 @@ public class OffersController(IMediator mediator) : ControllerBase
         await mediator.Send(new CancelOfferCommand(id, CurrentUserId), ct);
         return NoContent();
     }
+
+    /// <summary>Met à jour une offre existante (créateur uniquement, email vérifié).</summary>
+    [HttpPut("{id:guid}")]
+    [Authorize]
+    [RequireVerifiedEmail]
+    public async Task<IActionResult> UpdateOffer(Guid id, [FromBody] UpdateOfferRequest request, CancellationToken ct)
+    {
+        var command = new UpdateOfferCommand(
+            OfferId: id,
+            UserId: CurrentUserId,
+            Amount: request.Amount,
+            RemainingAmount: request.RemainingAmount,
+            RateMode: request.RateMode,
+            Rate: request.Rate,
+            MinAmount: request.MinAmount,
+            MaxAmount: request.MaxAmount,
+            Notes: request.Notes,
+            ExpiresAt: request.ExpiresAt,
+            Status: request.Status,
+            PaymentMethodIds: request.PaymentMethodIds,
+            SellCountryCodes: request.SellCountryCodes
+        );
+        var result = await mediator.Send(command, ct);
+        return Ok(result);
+    }
 }
 
+public record UpdateOfferRequest(
+    decimal Amount,
+    decimal RemainingAmount,
+    string RateMode,
+    decimal? Rate,
+    decimal MinAmount,
+    decimal? MaxAmount,
+    string? Notes,
+    DateTime ExpiresAt,
+    string Status,
+    IList<Guid>? PaymentMethodIds,
+    // Null = pas de changement. Sinon liste complète des pays (≥1, tous même devise que l'offre).
+    IList<string>? SellCountryCodes = null
+);
+
 public record CreateOfferRequest(
-    string SellCurrencyCode,
-    string SellCountryCode,
+    // Multi-pays : au moins 1. Tous doivent partager la même devise (UEMOA/CEMAC). La devise
+    // est déduite côté serveur — le client n'a pas à l'envoyer.
+    IList<string> SellCountryCodes,
     decimal Amount,
     string RateMode,
     decimal? Rate,
