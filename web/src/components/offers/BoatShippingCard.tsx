@@ -1,5 +1,6 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { flagUrl } from '@/lib/utils'
 import CreatorTrustBadges from './CreatorTrustBadges'
@@ -13,6 +14,7 @@ interface Props {
 
 export default function BoatShippingCard({ offer, isAuthenticated, locale }: Props) {
   const t = useTranslations('home.boatShipping')
+  const router = useRouter()
 
   const dateStr = new Date(offer.shipDepartureDate).toLocaleDateString(
     locale === 'fr' ? 'fr' : 'en',
@@ -21,7 +23,11 @@ export default function BoatShippingCard({ offer, isAuthenticated, locale }: Pro
 
   return (
     <div
-      className="bg-white border rounded-2xl p-[22px] transition-all cursor-default"
+      role="link"
+      tabIndex={0}
+      onClick={() => router.push(`/${locale}/fret/${offer.id}`)}
+      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push(`/${locale}/fret/${offer.id}`) } }}
+      className="bg-white border rounded-2xl p-[22px] transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0d9488]"
       style={{ borderColor: '#e2e8f0' }}
       onMouseEnter={e => {
         e.currentTarget.style.borderColor = '#0d9488'
@@ -82,6 +88,7 @@ export default function BoatShippingCard({ offer, isAuthenticated, locale }: Pro
             rating={offer.creatorRating}
             reviewCount={offer.creatorReviewCount}
             locale={locale}
+            linkable={false}
           />
         </div>
         {isAuthenticated ? (

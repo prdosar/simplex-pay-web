@@ -50,6 +50,15 @@ public class BoatShippingController(IMediator mediator) : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("{id:guid}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetOffer(Guid id, CancellationToken ct)
+    {
+        var result = await mediator.Send(new GetBoatShippingOfferByIdQuery(
+            id, User.Identity?.IsAuthenticated ?? false), ct);
+        return Ok(result);
+    }
+
     [HttpPost]
     [Authorize]
     [RequireVerifiedEmail]

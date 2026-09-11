@@ -7,13 +7,14 @@ import { useTranslations, useLocale } from 'next-intl'
 import { api } from '@/lib/api'
 import { flagUrl } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
+import ReviewForm from '@/components/reviews/ReviewForm'
 import type { OfferDto, PagedResult, ReviewDto } from '@/types/api'
 
 export default function OfferDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const t = useTranslations('offer')
   const locale = useLocale()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user: me } = useAuth()
 
   const { data: offer, isLoading, error } = useSWR<OfferDto>(
     `/api/offers/${id}`,
@@ -21,10 +22,11 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
   )
 
   const creatorId = offer?.creator.id
-  const { data: reviews } = useSWR<PagedResult<ReviewDto>>(
+  const { data: reviews, mutate: mutateReviews } = useSWR<PagedResult<ReviewDto>>(
     creatorId ? `/api/users/${creatorId}/reviews?page=1&pageSize=3` : null,
     (url: string) => api.get<PagedResult<ReviewDto>>(url)
   )
+  const myExistingReview = me && offer ? reviews?.items.find(r => r.reviewerId === me.id) : undefined
 
   if (isLoading) return (
     <div className="max-w-3xl mx-auto px-4 py-12 animate-pulse">
@@ -309,6 +311,17 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
               : 'No reviews for this seller yet. Be the first to leave one via their profile.'}
           </p>
         )}
+      </div>
+
+      {/* Leave a review directly here */}
+      <div className="mt-6">
+        <ReviewForm
+          targetUserId={offer.creator.id}
+          targetName={offer.creator.firstName}
+          locale={locale}
+          existing={myExistingReview}
+          onSaved={() => mutateReviews()}
+        />
       </div>
     </div>
   )
