@@ -6,7 +6,11 @@ namespace SimplexPay.Application.Features.Admin.Queries;
 
 public record GetAdminStatsQuery : IRequest<AdminStatsDto>;
 
-public class GetAdminStatsHandler(IUserRepository users, IOfferRepository offers)
+public class GetAdminStatsHandler(
+    IUserRepository users,
+    IOfferRepository offers,
+    ITravelKiloOfferRepository travelKilo,
+    IBoatShippingOfferRepository boatShipping)
     : IRequestHandler<GetAdminStatsQuery, AdminStatsDto>
 {
     public async Task<AdminStatsDto> Handle(GetAdminStatsQuery _, CancellationToken ct)
@@ -15,19 +19,24 @@ public class GetAdminStatsHandler(IUserRepository users, IOfferRepository offers
 
         var totalUsersTask = users.GetTotalCountAsync(ct);
         var newUsersTask = users.GetCountSinceAsync(weekAgo, ct);
-        var offerStatsTask = offers.GetStatsAsync(ct);
+        var devisesStatsTask = offers.GetStatsAsync(ct);
+        var kilosStatsTask = travelKilo.GetStatsAsync(ct);
+        var bateauStatsTask = boatShipping.GetStatsAsync(ct);
 
-        await Task.WhenAll(totalUsersTask, newUsersTask, offerStatsTask);
+        await Task.WhenAll(totalUsersTask, newUsersTask, devisesStatsTask, kilosStatsTask, bateauStatsTask);
 
-        var (totalOffers, activeOffers, newOffersThisWeek) = offerStatsTask.Result;
+        // Agrégation des 3 catégories du marketplace.
+        var (dt, da, dn) = devisesStatsTask.Result;
+        var (kt, ka, kn) = kilosStatsTask.Result;
+        var (bt, ba, bn) = bateauStatsTask.Result;
 
         return new AdminStatsDto(
             TotalUsers: totalUsersTask.Result,
-            TotalOffers: totalOffers,
-            ActiveOffers: activeOffers,
+            TotalOffers: dt + kt + bt,
+            ActiveOffers: da + ka + ba,
             TotalTransactions: 0,
             NewUsersThisWeek: newUsersTask.Result,
-            NewOffersThisWeek: newOffersThisWeek
+            NewOffersThisWeek: dn + kn + bn
         );
     }
 }

@@ -92,6 +92,16 @@ public class TravelKiloOfferRepository(AppDbContext db) : ITravelKiloOfferReposi
         return (items, total);
     }
 
+    public async Task<(int Total, int Active, int NewThisWeek)> GetStatsAsync(CancellationToken ct)
+    {
+        var now = DateTime.UtcNow;
+        var weekAgo = now.AddDays(-7);
+        var total = await db.TravelKiloOffers.CountAsync(ct);
+        var active = await db.TravelKiloOffers.CountAsync(o => (o.Status == OfferStatus.Open || o.Status == OfferStatus.PartiallyFilled) && o.ExpiresAt > now, ct);
+        var newThisWeek = await db.TravelKiloOffers.CountAsync(o => o.CreatedAt >= weekAgo, ct);
+        return (total, active, newThisWeek);
+    }
+
     public async Task AddAsync(TravelKiloOffer offer, CancellationToken ct) =>
         await db.TravelKiloOffers.AddAsync(offer, ct);
 
