@@ -26,11 +26,20 @@ services:
       - Jwt__Key=${JWT_SECRET_KEY}
       - Jwt__Issuer=simplexpay-api
       - Jwt__Audience=simplexpay-clients
-      - Jwt__ExpiryMinutes=60
-      - Cors__Origins__0=${WEB_URL:-http://localhost:3000}
-      - Cors__Origins__1=${ADMIN_URL:-http://localhost:3001}
+      - Jwt__ExpiryMinutes=${JWT_EXPIRY_MINUTES:-60}
+      - Jwt__RefreshExpiryDays=${JWT_REFRESH_EXPIRY_DAYS:-30}
+      - Cors__Origins__0=${WEB_URL}
+      - Cors__Origins__1=${ADMIN_URL}
+      - Smtp__Host=${SMTP_HOST}
+      - Smtp__Port=${SMTP_PORT:-465}
+      - Smtp__User=${SMTP_USER}
+      - Smtp__Pass=${SMTP_PASS}
+      - Smtp__From=${SMTP_FROM}
+      - App__Url=${WEB_URL}
+      - App__EmailVerificationCodeExpiryMinutes=${EMAIL_VERIFICATION_EXPIRY_MINUTES:-15}
+      - App__EmailVerificationMaxAttempts=${EMAIL_VERIFICATION_MAX_ATTEMPTS:-5}
     ports:
-      - "5000:8080"
+      - "${API_PORT:-5041}:8080"
     depends_on:
       postgres:
         condition: service_healthy
@@ -41,13 +50,11 @@ services:
       context: ./web
       dockerfile: Dockerfile
       args:
-        # URL de l'API telle que le NAVIGATEUR la voit (IP/domaine public du serveur).
-        # Définir API_PUBLIC_URL dans .env pour la production.
-        # Exemple : API_PUBLIC_URL=https://api.simplexpay.com
-        NEXT_PUBLIC_API_URL: ${API_PUBLIC_URL:-http://localhost:5000}
+        # URL de l'API telle que le NAVIGATEUR la voit (domaine public HTTPS).
+        NEXT_PUBLIC_API_URL: ${API_PUBLIC_URL}
     container_name: simplexpay-web
     ports:
-      - "3000:3000"
+      - "${WEB_PORT:-3003}:3000"
     depends_on:
       - api
     restart: unless-stopped
@@ -57,10 +64,10 @@ services:
       context: ./admin
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: ${API_PUBLIC_URL:-http://localhost:5000}
+        NEXT_PUBLIC_API_URL: ${API_PUBLIC_URL}
     container_name: simplexpay-admin
     ports:
-      - "3001:3000"
+      - "${ADMIN_PORT:-3004}:3000"
     depends_on:
       - api
     restart: unless-stopped
