@@ -92,6 +92,20 @@ export default function HomeClient({ locale }: { locale: string }) {
     (url: string) => api.get<CountryDto[]>(url)
   )
 
+  // Compteurs globaux (toutes offres actives, sans filtres user) — pour les badges d'onglets.
+  const { data: devisesTotal } = useSWR<PagedResult<OfferDto>>(
+    '/api/offers?pageSize=1',
+    (url: string) => api.get<PagedResult<OfferDto>>(url)
+  )
+  const { data: kilosTotal } = useSWR<PagedResult<TravelKiloOfferDto>>(
+    '/api/travel-kilo?pageSize=1',
+    (url: string) => api.get<PagedResult<TravelKiloOfferDto>>(url)
+  )
+  const { data: bateauTotal } = useSWR<PagedResult<BoatShippingOfferDto>>(
+    '/api/boat-shipping?pageSize=1',
+    (url: string) => api.get<PagedResult<BoatShippingOfferDto>>(url)
+  )
+
   const sellCountries = countries?.filter(c => c.currencyType === 'Sell') ?? []
   const selectedCountry = countries?.find(c => c.code === sellCountry)
   const paymentMethods = selectedCountry?.paymentMethods ?? []
@@ -306,10 +320,10 @@ export default function HomeClient({ locale }: { locale: string }) {
     </div>
   )
 
-  const TABS: { key: Tab; label: string }[] = [
-    { key: 'devises', label: t('tabs.devises') },
-    { key: 'kilos',   label: t('tabs.kilosVoyage') },
-    { key: 'bateau',  label: t('tabs.fretBateau') },
+  const TABS: { key: Tab; label: string; count?: number }[] = [
+    { key: 'devises', label: t('tabs.devises'),      count: devisesTotal?.total },
+    { key: 'kilos',   label: t('tabs.kilosVoyage'), count: kilosTotal?.total },
+    { key: 'bateau',  label: t('tabs.fretBateau'),  count: bateauTotal?.total },
   ]
 
   function renderPagination(currentPage: number, totalPages: number, setPageFn: (p: number) => void) {
@@ -466,14 +480,25 @@ export default function HomeClient({ locale }: { locale: string }) {
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all"
+                className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all inline-flex items-center gap-2"
                 style={{
                   background: activeTab === tab.key ? '#0d9488' : 'white',
                   color: activeTab === tab.key ? 'white' : '#64748b',
                   border: activeTab === tab.key ? '1.5px solid #0d9488' : '1.5px solid #e2e8f0',
                 }}
               >
-                {tab.label}
+                <span>{tab.label}</span>
+                {tab.count !== undefined && (
+                  <span
+                    className="text-[11px] font-bold px-1.5 py-[1px] rounded-full min-w-[20px] text-center"
+                    style={{
+                      background: activeTab === tab.key ? 'rgba(255,255,255,0.25)' : '#f1f5f9',
+                      color: activeTab === tab.key ? 'white' : '#0d9488',
+                    }}
+                  >
+                    {tab.count}
+                  </span>
+                )}
               </button>
             ))}
           </div>
