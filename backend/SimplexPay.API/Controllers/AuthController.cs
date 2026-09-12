@@ -18,10 +18,20 @@ public class AuthController(IMediator mediator) : ControllerBase
         return Created(string.Empty, result);
     }
 
-    /// <summary>Connexion — retourne access token + refresh token.</summary>
+    /// <summary>Étape 1 — vérifie email+password, envoie un code 2FA par email.
+    /// Réponse : { requiresTwoFactor, email, codeExpiryMinutes }. Pas de token à ce stade.</summary>
     [HttpPost("login")]
     [AllowAnonymous]
     public async Task<IActionResult> Login([FromBody] LoginCommand command, CancellationToken ct)
+    {
+        var result = await mediator.Send(command, ct);
+        return Ok(result);
+    }
+
+    /// <summary>Étape 2 — vérifie le code 2FA reçu par email, retourne accessToken + refreshToken.</summary>
+    [HttpPost("login-verify")]
+    [AllowAnonymous]
+    public async Task<IActionResult> LoginVerify([FromBody] VerifyLoginCommand command, CancellationToken ct)
     {
         var result = await mediator.Send(command, ct);
         return Ok(result);

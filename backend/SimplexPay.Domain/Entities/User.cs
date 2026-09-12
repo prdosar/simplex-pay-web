@@ -16,6 +16,14 @@ public class User : BaseEntity
     public string? EmailVerificationCodeHash { get; private set; }
     public DateTime? EmailVerificationCodeExpiresAt { get; private set; }
     public int EmailVerificationAttempts { get; private set; } = 0;
+
+    // 2FA email obligatoire à chaque login — code régénéré + envoyé par mail à chaque tentative
+    // password-OK. Distinct des colonnes EmailVerification* qui servent au flow initial de
+    // vérification du compte (statut permanent).
+    public string? TwoFactorCodeHash { get; private set; }
+    public DateTime? TwoFactorCodeExpiresAt { get; private set; }
+    public int TwoFactorAttempts { get; private set; } = 0;
+
     public bool IsAdmin { get; private set; } = false;
     public bool IsCertified { get; private set; } = false;
     public decimal Rating { get; private set; } = 0;
@@ -71,6 +79,28 @@ public class User : BaseEntity
         EmailVerificationCodeExpiresAt = null;
         EmailVerificationAttempts = 0;
         Status = UserStatus.Active;
+        MarkUpdated();
+    }
+
+    public void SetTwoFactorCode(string codeHash, DateTime expiresAt)
+    {
+        TwoFactorCodeHash = codeHash;
+        TwoFactorCodeExpiresAt = expiresAt;
+        TwoFactorAttempts = 0;
+        MarkUpdated();
+    }
+
+    public void IncrementTwoFactorAttempts()
+    {
+        TwoFactorAttempts++;
+        MarkUpdated();
+    }
+
+    public void ClearTwoFactorCode()
+    {
+        TwoFactorCodeHash = null;
+        TwoFactorCodeExpiresAt = null;
+        TwoFactorAttempts = 0;
         MarkUpdated();
     }
 

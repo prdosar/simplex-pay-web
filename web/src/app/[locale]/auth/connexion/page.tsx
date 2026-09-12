@@ -4,10 +4,18 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
-import { api } from '@/lib/api'
+import { api, ApiError } from '@/lib/api'
 import { useAuth } from '@/context/AuthContext'
 import { flagUrl } from '@/lib/utils'
 import type { AuthResponse } from '@/types/api'
+
+interface LoginResponse {
+  requiresTwoFactor: boolean
+  email: string
+  codeExpiryMinutes: number
+}
+
+type Step = 'credentials' | 'code'
 
 export default function LoginPage() {
   const t = useTranslations('auth.login')
@@ -18,8 +26,11 @@ export default function LoginPage() {
   const expired = searchParams.get('expired') === '1'
   const { login } = useAuth()
 
+  const [step, setStep] = useState<Step>('credentials')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [code, setCode] = useState('')
+  const [codeExpiryMinutes, setCodeExpiryMinutes] = useState(10)
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -29,16 +40,42 @@ export default function LoginPage() {
     setError('')
     setLoading(true)
     try {
-      const auth = await api.post<AuthResponse>('/api/auth/login', { email, password })
-      login(auth)
-      router.push(`/${locale}`)
-    } catch (err: unknown) {
-      const e = err as { status?: number }
-      setError(
-        e.status === 401
-          ? (locale === 'fr' ? 'Email ou mot de passe incorrect.' : 'Invalid email or password.')
-          : (locale === 'fr' ? 'Une erreur est survenue.' : 'An error occurred.')
-      )
+      if (step === 'credentials') {
+        // Étape 1 : envoie email+password, backend renvoie le code par mail.
+        const res = await api.post<LoginResponse>('/api/auth/login', { email, password })
+        setCodeExpiryMinutes(res.codeExpiryMinutes)
+        setStep('code')
+      } else {
+        // Étape 2 : vérifie code → AuthResponse.
+        const auth = await api.post<AuthResponse>('/api/auth/login-verify', { email, code })
+        login(auth)
+        router.push(`/${locale}`)
+      }
+    } catch (err) {
+      if (err instanceof ApiError) {
+        if (err.status === 401) {
+          setError(locale === 'fr' ? 'Email ou mot de passe incorrect.' : 'Invalid email or password.')
+        } else if (err.status === 403) {
+          setError(err.message || (locale === 'fr' ? 'Code invalide ou expiré.' : 'Invalid or expired code.'))
+        } else {
+          setError(locale === 'fr' ? 'Une erreur est survenue.' : 'An error occurred.')
+        }
+      } else {
+        setError(locale === 'fr' ? 'Une erreur est survenue.' : 'An error occurred.')
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function resendCode() {
+    setError(''); setLoading(true)
+    try {
+      const res = await api.post<LoginResponse>('/api/auth/login', { email, password })
+      setCodeExpiryMinutes(res.codeExpiryMinutes)
+      setCode('')
+    } catch {
+      setError(locale === 'fr' ? 'Impossible de renvoyer le code.' : 'Failed to resend code.')
     } finally {
       setLoading(false)
     }
@@ -160,48 +197,80 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="bg-white border border-[#e2e8f0] rounded-2xl p-8 space-y-5">
 
-            {/* Email */}
-            <div>
-              <label className="block text-sm font-semibold mb-1.5" style={{ color: '#334155' }}>
-                {t('email')}
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                required
-                autoComplete="email"
-                placeholder="vous@email.com"
-                className="w-full border border-[#e2e8f0] rounded-[10px] px-4 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#0d9488] transition-shadow"
-                style={{ color: '#0f172a' }}
-              />
-            </div>
+            {step === 'credentials' ? (
+              <>
+                {/* Email */}
+                <div>
+                  <label className="block text-sm font-semibold mb-1.5" style={{ color: '#334155' }}>
+                    {t('email')}
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    required
+                    autoComplete="email"
+                    placeholder="vous@email.com"
+                    className="w-full border border-[#e2e8f0] rounded-[10px] px-4 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#0d9488] transition-shadow"
+                    style={{ color: '#0f172a' }}
+                  />
+                </div>
 
-            {/* Password */}
-            <div>
-              <label className="block text-sm font-semibold mb-1.5" style={{ color: '#334155' }}>
-                {t('password')}
-              </label>
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  required
-                  autoComplete="current-password"
-                  className="w-full border border-[#e2e8f0] rounded-[10px] px-4 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#0d9488] transition-shadow pr-12"
-                  style={{ color: '#0f172a' }}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(v => !v)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[13px]"
-                  style={{ color: '#94a3b8' }}
-                >
-                  {showPassword ? '🙈' : '👁'}
-                </button>
-              </div>
-            </div>
+                {/* Password */}
+                <div>
+                  <label className="block text-sm font-semibold mb-1.5" style={{ color: '#334155' }}>
+                    {t('password')}
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={e => setPassword(e.target.value)}
+                      required
+                      autoComplete="current-password"
+                      className="w-full border border-[#e2e8f0] rounded-[10px] px-4 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#0d9488] transition-shadow pr-12"
+                      style={{ color: '#0f172a' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(v => !v)}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[13px]"
+                      style={{ color: '#94a3b8' }}
+                    >
+                      {showPassword ? '🙈' : '👁'}
+                    </button>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Étape 2 : code 2FA reçu par email */}
+                <div>
+                  <p className="text-[13px] mb-4" style={{ color: '#64748b' }}>
+                    {locale === 'fr'
+                      ? `Un code à 6 chiffres a été envoyé à `
+                      : `A 6-digit code has been sent to `}
+                    <span className="font-semibold" style={{ color: '#0f172a' }}>{email}</span>.
+                    {locale === 'fr' ? ` Il expire dans ${codeExpiryMinutes} min.` : ` It expires in ${codeExpiryMinutes} min.`}
+                  </p>
+                  <label className="block text-sm font-semibold mb-1.5" style={{ color: '#334155' }}>
+                    {locale === 'fr' ? 'Code de vérification' : 'Verification code'}
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    value={code}
+                    onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    required
+                    maxLength={6}
+                    placeholder="123456"
+                    className="w-full border border-[#e2e8f0] rounded-[10px] px-4 py-3 text-2xl text-center tracking-widest font-bold bg-white focus:outline-none focus:ring-2 focus:ring-[#0d9488]"
+                    style={{ color: '#0f172a' }}
+                  />
+                </div>
+              </>
+            )}
 
             {/* Error */}
             {error && (
@@ -213,16 +282,42 @@ export default function LoginPage() {
             {/* Submit */}
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || (step === 'code' && code.length !== 6)}
               className="w-full py-3 text-[15px] font-bold text-white rounded-[10px] transition-colors disabled:opacity-60"
               style={{ background: '#0d9488' }}
               onMouseEnter={e => { if (!loading) e.currentTarget.style.background = '#0f766e' }}
               onMouseLeave={e => { if (!loading) e.currentTarget.style.background = '#0d9488' }}
             >
               {loading
-                ? (locale === 'fr' ? 'Connexion…' : 'Logging in…')
-                : t('submit')}
+                ? (step === 'credentials'
+                    ? (locale === 'fr' ? 'Envoi du code…' : 'Sending code…')
+                    : (locale === 'fr' ? 'Vérification…' : 'Verifying…'))
+                : (step === 'credentials'
+                    ? (locale === 'fr' ? 'Continuer' : 'Continue')
+                    : (locale === 'fr' ? 'Se connecter' : 'Log in'))}
             </button>
+
+            {step === 'code' && (
+              <div className="flex items-center justify-between text-[13px]">
+                <button
+                  type="button"
+                  onClick={() => { setStep('credentials'); setCode(''); setError('') }}
+                  className="font-semibold hover:underline"
+                  style={{ color: '#64748b' }}
+                >
+                  ← {locale === 'fr' ? 'Changer d\'identifiants' : 'Change credentials'}
+                </button>
+                <button
+                  type="button"
+                  onClick={resendCode}
+                  disabled={loading}
+                  className="font-semibold hover:underline disabled:opacity-50"
+                  style={{ color: '#0d9488' }}
+                >
+                  {locale === 'fr' ? 'Renvoyer le code' : 'Resend code'}
+                </button>
+              </div>
+            )}
 
             <div className="relative py-1">
               <div className="absolute inset-0 flex items-center">
