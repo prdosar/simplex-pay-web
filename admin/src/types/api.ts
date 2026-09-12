@@ -96,6 +96,7 @@ export interface ActivityLogDto {
   path: string
   action: string
   statusCode: number
+  source: 'Web' | 'Admin'
   country?: string
   city?: string
 }

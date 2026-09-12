@@ -13,11 +13,13 @@ public class ActivityLogRepository(AppDbContext db) : IActivityLogRepository
     public Task SaveChangesAsync(CancellationToken ct) => db.SaveChangesAsync(ct);
 
     public async Task<(IList<ActivityLog> Items, int Total)> GetPagedAsync(
-        string? action, string? ipAddress, string? country, Guid? userId,
+        ActivityLogSource? source, string? action, string? ipAddress, string? country, Guid? userId,
         DateTime? from, DateTime? to, int page, int pageSize, CancellationToken ct)
     {
         var q = db.ActivityLogs.AsQueryable();
 
+        if (source.HasValue)
+            q = q.Where(x => x.Source == source.Value);
         if (!string.IsNullOrWhiteSpace(action))
             q = q.Where(x => x.Action == action);
         if (!string.IsNullOrWhiteSpace(ipAddress))

@@ -15,6 +15,7 @@ public record ActivityLogDto(
     string Path,
     string Action,
     int StatusCode,
+    string Source,  // "Web" ou "Admin"
     string? Country,
     string? City
 )
@@ -32,6 +33,7 @@ public record ActivityLogDto(
         log.Path,
         log.Action,
         log.StatusCode,
+        log.Source.ToString(),
         log.Country,
         log.City
     );

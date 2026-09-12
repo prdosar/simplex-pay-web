@@ -29,6 +29,7 @@ services:
       - Jwt__Audience=simplexpay-clients
       - Cors__Origins__0=http://localhost:3000
       - Cors__Origins__1=http://localhost:3001
+      - Cors__AdminOrigins__0=http://localhost:3001
     ports:
       - "5080:8080"
     depends_on:

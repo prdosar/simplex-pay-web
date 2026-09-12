@@ -7,8 +7,10 @@ public interface IActivityLogRepository
     Task AddAsync(ActivityLog log, CancellationToken ct = default);
     Task SaveChangesAsync(CancellationToken ct = default);
 
-    // Filtres: action, ipAddress, country, userId, from, to. Tri par Timestamp DESC.
+    // Filtres: source (onglet Admin/Web), action, ipAddress, country, userId, from, to.
+    // Tri par Timestamp DESC.
     Task<(IList<ActivityLog> Items, int Total)> GetPagedAsync(
+        ActivityLogSource? source,
         string? action,
         string? ipAddress,
         string? country,

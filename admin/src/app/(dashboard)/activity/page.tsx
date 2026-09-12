@@ -5,10 +5,9 @@ import useSWR from 'swr'
 import { api } from '@/lib/api'
 import type { PagedResult, ActivityLogDto } from '@/types/api'
 
-// Liste ordonnée des actions "connues" pour le dropdown filtre. À maintenir
-// en phase avec DeriveAction() dans ActivityLoggingMiddleware.cs.
-const KNOWN_ACTIONS = [
-  { value: '', label: 'Toutes les actions' },
+// Actions communes aux 2 onglets (site public + panel admin utilisent le même /api/auth/*).
+// À maintenir en phase avec DeriveAction() dans ActivityLoggingMiddleware.cs.
+const WEB_ACTIONS = [
   { value: 'register', label: 'Inscription' },
   { value: 'login', label: 'Connexion' },
   { value: 'verify_email', label: 'Vérification email' },
@@ -37,7 +36,23 @@ const KNOWN_ACTIONS = [
   { value: 'view_my_offers_fret', label: 'Mes offres Fret' },
 ]
 
+const ADMIN_ACTIONS = [
+  { value: 'admin_login', label: 'Connexion admin' },
+  { value: 'admin_verify_email', label: 'Vérif email admin' },
+  { value: 'admin_resend_verification_code', label: 'Renvoi code admin' },
+  { value: 'admin_refresh_token', label: 'Refresh token admin' },
+  { value: 'admin_view_own_profile', label: 'Voir son profil (admin)' },
+  { value: 'admin_view_stats', label: 'Voir stats' },
+  { value: 'admin_view_activity_logs', label: 'Voir journal activité' },
+  { value: 'admin_list_users', label: 'Liste utilisateurs' },
+  { value: 'admin_certify_user', label: 'Certifier utilisateur' },
+  { value: 'admin_edit_user_profile', label: 'Modif profil utilisateur' },
+]
+
+type Tab = 'Web' | 'Admin'
+
 export default function ActivityPage() {
+  const [tab, setTab] = useState<Tab>('Web')
   const [page, setPage] = useState(1)
   const [action, setAction] = useState('')
   const [ipAddress, setIpAddress] = useState('')
@@ -45,7 +60,7 @@ export default function ActivityPage() {
   const [from, setFrom] = useState('')  // YYYY-MM-DD
   const [to, setTo] = useState('')
 
-  const qs = new URLSearchParams({ page: String(page), pageSize: '10' })
+  const qs = new URLSearchParams({ page: String(page), pageSize: '10', source: tab })
   if (action) qs.set('action', action)
   if (ipAddress) qs.set('ipAddress', ipAddress)
   if (country) qs.set('country', country.toUpperCase())
@@ -63,6 +78,16 @@ export default function ActivityPage() {
   }
   const hasFilter = !!(action || ipAddress || country || from || to)
 
+  function switchTab(next: Tab) {
+    if (next === tab) return
+    setTab(next)
+    // Le filtre "action" est dépendant de l'onglet : on le reset au changement.
+    setAction('')
+    setPage(1)
+  }
+
+  const knownActions = tab === 'Admin' ? ADMIN_ACTIONS : WEB_ACTIONS
+
   return (
     <div className="p-8">
       <div className="mb-6">
@@ -70,6 +95,16 @@ export default function ActivityPage() {
         <p className="text-muted-foreground text-sm mt-1">
           {data ? `${data.total} événements` : '...'} · rafraîchissement auto 15s
         </p>
+      </div>
+
+      {/* Onglets Web / Admin */}
+      <div className="mb-4 border-b border-border flex gap-1">
+        <TabButton active={tab === 'Web'} onClick={() => switchTab('Web')}>
+          Site web
+        </TabButton>
+        <TabButton active={tab === 'Admin'} onClick={() => switchTab('Admin')}>
+          Panel admin
+        </TabButton>
       </div>
 
       {/* Filtres */}
@@ -82,7 +117,8 @@ export default function ActivityPage() {
               onChange={e => { setAction(e.target.value); setPage(1) }}
               className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary"
             >
-              {KNOWN_ACTIONS.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
+              <option value="">Toutes les actions</option>
+              {knownActions.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
             </select>
           </div>
           <div>
@@ -230,6 +266,21 @@ export default function ActivityPage() {
         )}
       </div>
     </div>
+  )
+}
+
+function TabButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`px-4 py-2 text-sm font-semibold border-b-2 -mb-px transition-colors ${
+        active
+          ? 'border-primary text-primary'
+          : 'border-transparent text-muted-foreground hover:text-slate-900'
+      }`}
+    >
+      {children}
+    </button>
   )
 }
 

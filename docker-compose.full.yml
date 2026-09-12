@@ -30,6 +30,7 @@ services:
       - Jwt__RefreshExpiryDays=${JWT_REFRESH_EXPIRY_DAYS:-30}
       - Cors__Origins__0=${WEB_URL}
       - Cors__Origins__1=${ADMIN_URL}
+      - Cors__AdminOrigins__0=${ADMIN_URL}
       - Smtp__Host=${SMTP_HOST}
       - Smtp__Port=${SMTP_PORT:-465}
       - Smtp__User=${SMTP_USER}

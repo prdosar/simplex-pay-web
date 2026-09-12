@@ -16,6 +16,7 @@ public class ActivityLogConfiguration : IEntityTypeConfiguration<ActivityLog>
         b.Property(x => x.Action).HasMaxLength(100).IsRequired();
         b.Property(x => x.Country).HasMaxLength(2);
         b.Property(x => x.City).HasMaxLength(100);
+        b.Property(x => x.Source).HasConversion<int>();       // Web=0, Admin=1
 
         // Index pour les filtres admin fréquents.
         b.HasIndex(x => x.Timestamp);                         // ORDER BY DESC + range from/to
@@ -23,6 +24,7 @@ public class ActivityLogConfiguration : IEntityTypeConfiguration<ActivityLog>
         b.HasIndex(x => x.IpAddress);                         // filter par IP
         b.HasIndex(x => x.Country);                           // filter par pays
         b.HasIndex(x => x.UserId);                            // filter par user
+        b.HasIndex(x => x.Source);                            // filter par onglet (Web/Admin)
 
         // Pas de FK sur User (log garde son historique même si le user est supprimé plus tard).
     }

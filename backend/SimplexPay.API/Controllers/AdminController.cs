@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using SimplexPay.Application.Features.Admin.Commands;
 using SimplexPay.Application.Features.Admin.Queries;
 using SimplexPay.Application.Features.Users.Commands;
+using SimplexPay.Domain.Entities;
 
 namespace SimplexPay.API.Controllers;
 
@@ -16,9 +17,10 @@ public class AdminController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> GetStats(CancellationToken ct) =>
         Ok(await mediator.Send(new GetAdminStatsQuery(), ct));
 
-    /// <summary>Journal d'activité. Filtres : action, ipAddress, country (ISO 2), userId, from, to (ISO date).</summary>
+    /// <summary>Journal d'activité. Filtres : source (Web/Admin), action, ipAddress, country (ISO 2), userId, from, to (ISO date).</summary>
     [HttpGet("activity-logs")]
     public async Task<IActionResult> GetActivityLogs(
+        [FromQuery] string? source,
         [FromQuery] string? action,
         [FromQuery] string? ipAddress,
         [FromQuery] string? country,
@@ -29,7 +31,9 @@ public class AdminController(IMediator mediator) : ControllerBase
         [FromQuery] int pageSize = 10,
         CancellationToken ct = default)
     {
+        ActivityLogSource? src = Enum.TryParse<ActivityLogSource>(source, ignoreCase: true, out var s) ? s : null;
         var result = await mediator.Send(new GetActivityLogsQuery(
+            Source: src,
             Action: action,
             IpAddress: ipAddress,
             Country: country,

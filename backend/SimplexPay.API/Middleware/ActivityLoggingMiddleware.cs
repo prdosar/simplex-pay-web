@@ -6,12 +6,22 @@ using SimplexPay.Domain.Entities;
 namespace SimplexPay.API.Middleware;
 
 // Middleware qui log les requêtes "significatives" en base pour audit admin.
-// - Ne log pas : /api/countries, /api/currencies, /api/admin/*, /api/exchange-rates, /hubs/*,
+// - Ne log pas : /api/countries, /api/currencies, /api/exchange-rates, /hubs/*,
 //   health checks, static, favicon.
-// - Log les mutations (POST/PUT/PATCH/DELETE) + GET sur les endpoints liste/détail offres.
+// - Log les mutations (POST/PUT/PATCH/DELETE) + GET sur les endpoints liste/détail offres
+//   et les endpoints admin (/api/admin/*).
+// - Source (Web / Admin) dérivée du path (/api/admin/* → Admin) ou de l'Origin header
+//   (config Cors:AdminOrigins).
 // - Ne bloque JAMAIS la requête (les erreurs de logging sont avalées et logguées côté serveur).
-public class ActivityLoggingMiddleware(RequestDelegate next, ILogger<ActivityLoggingMiddleware> logger)
+public class ActivityLoggingMiddleware(
+    RequestDelegate next,
+    ILogger<ActivityLoggingMiddleware> logger,
+    IConfiguration config)
 {
+    private readonly HashSet<string> _adminOrigins = new(
+        config.GetSection("Cors:AdminOrigins").Get<string[]>() ?? [],
+        StringComparer.OrdinalIgnoreCase);
+
     // Path GET qu'on veut logger (visualisation de liste/détail).
     private static readonly Regex[] LoggedGetPaths =
     [
@@ -35,7 +45,8 @@ public class ActivityLoggingMiddleware(RequestDelegate next, ILogger<ActivityLog
             var userId = Guid.TryParse(userIdStr, out var uid) ? uid : (Guid?)null;
 
             var ip = GetClientIp(ctx);
-            var action = DeriveAction(ctx.Request.Method, ctx.Request.Path);
+            var source = DeriveSource(ctx);
+            var action = DeriveAction(ctx.Request.Method, ctx.Request.Path, source);
 
             // Geo depuis le cache uniquement (instantané). Si pas trouvé, on log sans geo
             // et on déclenche la résolution en background pour les prochaines requêtes de cet IP.
@@ -51,6 +62,7 @@ public class ActivityLoggingMiddleware(RequestDelegate next, ILogger<ActivityLog
                 path: ctx.Request.Path.ToString(),
                 action: action,
                 statusCode: ctx.Response.StatusCode,
+                source: source,
                 country: cached?.CountryCode,
                 city: cached?.City
             );
@@ -86,11 +98,13 @@ public class ActivityLoggingMiddleware(RequestDelegate next, ILogger<ActivityLog
         if (path.StartsWith("/api/countries", StringComparison.OrdinalIgnoreCase)) return false;
         if (path.StartsWith("/api/currencies", StringComparison.OrdinalIgnoreCase)) return false;
         if (path.StartsWith("/api/exchange-rates", StringComparison.OrdinalIgnoreCase)) return false;
-        if (path.StartsWith("/api/admin/", StringComparison.OrdinalIgnoreCase)) return false;
         if (path.StartsWith("/hubs/", StringComparison.OrdinalIgnoreCase)) return false;
         if (path.StartsWith("/swagger", StringComparison.OrdinalIgnoreCase)) return false;
         if (path.Equals("/favicon.ico", StringComparison.OrdinalIgnoreCase)) return false;
         if (!path.StartsWith("/api/", StringComparison.OrdinalIgnoreCase)) return false;
+
+        // Admin panel : log tout /api/admin/* (GET compris pour l'audit du panel).
+        if (path.StartsWith("/api/admin/", StringComparison.OrdinalIgnoreCase)) return true;
 
         // Log toutes les mutations
         if (method is "POST" or "PUT" or "PATCH" or "DELETE") return true;
@@ -100,6 +114,30 @@ public class ActivityLoggingMiddleware(RequestDelegate next, ILogger<ActivityLog
             return LoggedGetPaths.Any(r => r.IsMatch(path));
 
         return false;
+    }
+
+    // Détermine la source : Admin si le path est /api/admin/* ou si l'Origin correspond
+    // à un domaine admin déclaré (Cors:AdminOrigins). Web sinon (site public, mobile, curl).
+    private ActivityLogSource DeriveSource(HttpContext ctx)
+    {
+        var path = ctx.Request.Path.Value ?? string.Empty;
+        if (path.StartsWith("/api/admin/", StringComparison.OrdinalIgnoreCase))
+            return ActivityLogSource.Admin;
+
+        var origin = ctx.Request.Headers.Origin.ToString();
+        if (!string.IsNullOrEmpty(origin) && _adminOrigins.Contains(origin))
+            return ActivityLogSource.Admin;
+
+        // Fallback : le Referer (utile si l'Origin est absent, ex: navigation même-origine).
+        var referer = ctx.Request.Headers.Referer.ToString();
+        if (!string.IsNullOrEmpty(referer))
+        {
+            foreach (var adminOrigin in _adminOrigins)
+                if (referer.StartsWith(adminOrigin, StringComparison.OrdinalIgnoreCase))
+                    return ActivityLogSource.Admin;
+        }
+
+        return ActivityLogSource.Web;
     }
 
     private static string GetClientIp(HttpContext ctx)
@@ -115,17 +153,25 @@ public class ActivityLoggingMiddleware(RequestDelegate next, ILogger<ActivityLog
     }
 
     // Traduit method + path en action sémantique lisible côté admin.
-    private static string DeriveAction(string method, string path)
+    private static string DeriveAction(string method, string path, ActivityLogSource source)
     {
         path = path.ToLowerInvariant();
 
-        // Auth
-        if (path == "/api/auth/register") return "register";
-        if (path == "/api/auth/login") return "login";
-        if (path == "/api/auth/verify-email") return "verify_email";
-        if (path == "/api/auth/resend-code") return "resend_verification_code";
-        if (path == "/api/auth/refresh") return "refresh_token";
-        if (path == "/api/auth/me") return "view_own_profile";
+        // Admin panel
+        if (path == "/api/admin/stats") return "admin_view_stats";
+        if (path == "/api/admin/activity-logs") return "admin_view_activity_logs";
+        if (path == "/api/admin/users" && method == "GET") return "admin_list_users";
+        if (Regex.IsMatch(path, @"^/api/admin/users/[0-9a-f-]+/certify$")) return "admin_certify_user";
+        if (Regex.IsMatch(path, @"^/api/admin/users/[0-9a-f-]+/profile$")) return "admin_edit_user_profile";
+
+        // Auth — préfixe si l'appel vient du panel admin (ex. login admin vs login user).
+        var authPrefix = source == ActivityLogSource.Admin ? "admin_" : string.Empty;
+        if (path == "/api/auth/register") return $"{authPrefix}register";
+        if (path == "/api/auth/login") return $"{authPrefix}login";
+        if (path == "/api/auth/verify-email") return $"{authPrefix}verify_email";
+        if (path == "/api/auth/resend-code") return $"{authPrefix}resend_verification_code";
+        if (path == "/api/auth/refresh") return $"{authPrefix}refresh_token";
+        if (path == "/api/auth/me") return $"{authPrefix}view_own_profile";
 
         // Users
         if (Regex.IsMatch(path, @"^/api/users/[0-9a-f-]+/profile$") && method == "GET") return "view_user_profile";

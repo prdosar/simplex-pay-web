@@ -2,10 +2,12 @@ using MediatR;
 using SimplexPay.Application.Features.Admin.Dtos;
 using SimplexPay.Application.Features.Offers.Queries;
 using SimplexPay.Application.Interfaces;
+using SimplexPay.Domain.Entities;
 
 namespace SimplexPay.Application.Features.Admin.Queries;
 
 public record GetActivityLogsQuery(
+    ActivityLogSource? Source = null,
     string? Action = null,
     string? IpAddress = null,
     string? Country = null,
@@ -25,7 +27,7 @@ public class GetActivityLogsQueryHandler(
     {
         var pageSize = Math.Clamp(req.PageSize, 1, 100);
         var (items, total) = await logs.GetPagedAsync(
-            req.Action, req.IpAddress, req.Country, req.UserId,
+            req.Source, req.Action, req.IpAddress, req.Country, req.UserId,
             req.From, req.To, req.Page, pageSize, ct);
 
         // Hydrate les infos user pour les logs authentifiés. On charge en 1 seule requête.
