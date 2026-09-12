@@ -30,7 +30,12 @@ function RootLayoutNav() {
         <Stack>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="auth/login" options={{ headerShown: false, presentation: 'modal' }} />
-          <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="auth/register" options={{ headerShown: false, presentation: 'modal' }} />
+          <Stack.Screen name="auth/verify" options={{ headerShown: false, presentation: 'modal' }} />
+          <Stack.Screen name="offers/[id]" options={{ title: 'Offre' }} />
+          <Stack.Screen name="kilos/[id]" options={{ title: 'Kilos voyage' }} />
+          <Stack.Screen name="fret/[id]" options={{ title: 'Fret bateau' }} />
+          <Stack.Screen name="create" options={{ title: 'Nouvelle offre' }} />
         </Stack>
       </ThemeProvider>
     </AuthProvider>

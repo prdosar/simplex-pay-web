@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { View, Text, TextInput, Pressable, ScrollView, Alert } from 'react-native'
+import { View, Text, TextInput, Pressable, ScrollView } from 'react-native'
 import { router } from 'expo-router'
 import { api, ApiError } from '@/src/lib/api'
 import { useAuth } from '@/src/context/AuthContext'
@@ -84,7 +84,7 @@ export default function LoginScreen() {
       </Pressable>
 
       <Pressable
-        onPress={() => Alert.alert('Bientôt', 'Inscription arrive dans la prochaine version.')}
+        onPress={() => router.push('/auth/register')}
         className="mt-6 items-center"
       >
         <Text className="text-sm text-muted-foreground">

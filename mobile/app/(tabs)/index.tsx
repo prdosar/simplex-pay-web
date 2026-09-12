@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { View, Text, ScrollView, ActivityIndicator, RefreshControl, Pressable } from 'react-native'
+import { router } from 'expo-router'
 import useSWR from 'swr'
 import { api } from '@/src/lib/api'
 import type { PagedResult, OfferDto, TravelKiloOfferDto, BoatShippingOfferDto } from '@/src/types/api'
@@ -79,7 +80,10 @@ export default function HomeScreen() {
 
 function DevisesCard({ offer }: { offer: OfferDto }) {
   return (
-    <View className="bg-white border border-border rounded-2xl p-4">
+    <Pressable
+      onPress={() => router.push({ pathname: '/offers/[id]', params: { id: offer.id } })}
+      className="bg-white border border-border rounded-2xl p-4 active:opacity-70"
+    >
       <View className="flex-row items-center justify-between mb-2">
         <Text className="text-base font-bold text-dark">{offer.sellCurrency} → {offer.buyCurrency}</Text>
         <View className="bg-primary-light px-2 py-0.5 rounded-full">
@@ -103,13 +107,16 @@ function DevisesCard({ offer }: { offer: OfferDto }) {
           <Text className="text-xs italic text-muted-foreground">Nouveau</Text>
         )}
       </View>
-    </View>
+    </Pressable>
   )
 }
 
 function KilosCard({ offer }: { offer: TravelKiloOfferDto }) {
   return (
-    <View className="bg-white border border-border rounded-2xl p-4">
+    <Pressable
+      onPress={() => router.push({ pathname: '/kilos/[id]', params: { id: offer.id } })}
+      className="bg-white border border-border rounded-2xl p-4 active:opacity-70"
+    >
       <View className="flex-row items-center justify-between mb-2">
         <Text className="text-base font-bold text-dark flex-1" numberOfLines={1}>
           {offer.departureCity} → {offer.destinationCity}
@@ -133,13 +140,16 @@ function KilosCard({ offer }: { offer: TravelKiloOfferDto }) {
           <Text className="text-xs italic text-muted-foreground">Nouveau</Text>
         )}
       </View>
-    </View>
+    </Pressable>
   )
 }
 
 function FretCard({ offer }: { offer: BoatShippingOfferDto }) {
   return (
-    <View className="bg-white border border-border rounded-2xl p-4">
+    <Pressable
+      onPress={() => router.push({ pathname: '/fret/[id]', params: { id: offer.id } })}
+      className="bg-white border border-border rounded-2xl p-4 active:opacity-70"
+    >
       <View className="flex-row items-center justify-between mb-2">
         <Text className="text-base font-bold text-dark flex-1" numberOfLines={1}>
           {offer.departurePort} → {offer.destinationPort}
@@ -163,6 +173,6 @@ function FretCard({ offer }: { offer: BoatShippingOfferDto }) {
           <Text className="text-xs italic text-muted-foreground">Nouveau</Text>
         )}
       </View>
-    </View>
+    </Pressable>
   )
 }
