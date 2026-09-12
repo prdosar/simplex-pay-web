@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import { api } from '@/lib/api'
 import { useAuth } from '@/context/AuthContext'
@@ -14,6 +14,8 @@ export default function LoginPage() {
   const tHome = useTranslations('home')
   const locale = useLocale()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const expired = searchParams.get('expired') === '1'
   const { login } = useAuth()
 
   const [email, setEmail] = useState('')
@@ -146,6 +148,15 @@ export default function LoginPage() {
             </h1>
             <p className="text-[15px] mt-1.5" style={{ color: '#64748b' }}>{t('subtitle')}</p>
           </div>
+
+          {expired && (
+            <div className="mb-4 text-sm rounded-lg p-3 border"
+                 style={{ color: '#92400e', background: '#fffbeb', borderColor: '#fde68a' }}>
+              {locale === 'fr'
+                ? 'Ta session a expiré, reconnecte-toi.'
+                : 'Your session expired, please log in again.'}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="bg-white border border-[#e2e8f0] rounded-2xl p-8 space-y-5">
 

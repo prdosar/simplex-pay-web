@@ -6,6 +6,21 @@ export class ApiError extends Error {
   }
 }
 
+// Purge localStorage + redirige vers /auth/connexion quand le JWT est mort.
+// Évite qu'un token périmé laisse l'app dans un état "connecté" avec toutes les requêtes en 401.
+function handleUnauthorized() {
+  if (typeof window === 'undefined') return
+  const hadToken = !!localStorage.getItem('sp_token')
+  if (!hadToken) return  // 401 sans token = endpoint qui exige auth, pas notre problème d'expiration
+  localStorage.removeItem('sp_token')
+  localStorage.removeItem('sp_user')
+  // Préserve le locale actuel (/fr/... ou /en/...) et évite les boucles depuis les pages d'auth.
+  const path = window.location.pathname
+  if (path.startsWith('/fr/auth/') || path.startsWith('/en/auth/')) return
+  const locale = path.startsWith('/en') ? 'en' : 'fr'
+  window.location.href = `/${locale}/auth/connexion?expired=1`
+}
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = typeof window !== 'undefined' ? localStorage.getItem('sp_token') : null
 
@@ -17,6 +32,11 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
       ...options.headers,
     },
   })
+
+  if (res.status === 401) {
+    handleUnauthorized()
+    throw new ApiError(401, 'Unauthorized')
+  }
 
   if (res.status === 204) return null as T
 
