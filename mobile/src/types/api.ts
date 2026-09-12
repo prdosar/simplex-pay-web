@@ -1,0 +1,178 @@
+// Shape API — miroir de web/src/types/api.ts. Garde-les alignés manuellement pour
+// l'instant (pas de package partagé). Backend source de vérité : SimplexPay.Application/Features/*/Dtos/*.cs
+
+export interface CurrencyDto {
+  code: string
+  name: string
+  nameFr: string
+  symbol: string
+  type: 'Buy' | 'Sell'
+  decimalPlaces: number
+}
+
+export interface PaymentMethodDto {
+  id: string
+  name: string
+  description?: string
+  type: string
+  logoUrl?: string
+  isPopular: boolean
+}
+
+export interface CountryDto {
+  code: string
+  name: string
+  nameFr: string
+  currencyCode: string
+  currencyType: 'Buy' | 'Sell'
+  flag: string
+  paymentMethods: PaymentMethodDto[]
+}
+
+export interface OfferCreatorDto {
+  id: string
+  firstName: string
+  lastName?: string
+  rating: number
+  reviewCount: number
+  transactionCount: number
+  isCertified: boolean
+  phone?: string
+  whatsApp?: string
+}
+
+export interface UserProfileDto {
+  id: string
+  firstName: string
+  lastName?: string
+  country: string
+  isCertified: boolean
+  rating: number
+  reviewCount: number
+  transactionCount: number
+  memberSince: string
+}
+
+export interface ReviewDto {
+  id: string
+  reviewerId: string
+  reviewerFirstName: string
+  rating: number
+  comment?: string
+  createdAt: string
+  updatedAt?: string
+}
+
+export interface OfferPaymentMethodDto {
+  name: string
+  type: string
+  side: 'From' | 'To'
+}
+
+export type OfferRateMode = 'Fixed' | 'GoogleDaily' | 'XeDaily'
+
+export interface OfferDto {
+  id: string
+  type: 'Sell' | 'Buy'
+  sellCurrency: string
+  sellCurrencySymbol: string
+  buyCurrency: string
+  buyCurrencySymbol: string
+  sellCountries: string[]
+  buyCountry: string
+  buyCountryFlag: string
+  amount: number
+  amountFilled: number
+  remainingAmount: number
+  rateMode: OfferRateMode
+  rate: number | null
+  buyEquivalent: number
+  minAmount: number
+  maxAmount: number | null
+  status: string
+  expiresAt: string
+  createdAt: string
+  creator: OfferCreatorDto
+  paymentMethods: OfferPaymentMethodDto[]
+  notes?: string
+}
+
+export interface TravelKiloOfferDto {
+  id: string
+  creatorId: string
+  creatorFirstName: string
+  creatorRating: number
+  creatorReviewCount: number
+  creatorTransactionCount: number
+  creatorIsCertified: boolean
+  creatorPhone?: string
+  creatorWhatsApp?: string
+  availableKg: number
+  pricePerKg: number
+  travelDate: string
+  departureCity: string
+  destinationCity: string
+  departureCountryCode: string
+  destinationCountryCode: string
+  departureCountryFlag: string
+  destinationCountryFlag: string
+  notes?: string
+  status: string
+  expiresAt: string
+  createdAt: string
+}
+
+export interface BoatShippingOfferDto {
+  id: string
+  creatorId: string
+  creatorFirstName: string
+  creatorRating: number
+  creatorReviewCount: number
+  creatorTransactionCount: number
+  creatorIsCertified: boolean
+  creatorPhone?: string
+  creatorWhatsApp?: string
+  availableLbs: number
+  pricePerLb: number
+  shipDepartureDate: string
+  departurePort: string
+  destinationPort: string
+  departureCountryCode: string
+  destinationCountryCode: string
+  departureCountryFlag: string
+  destinationCountryFlag: string
+  notes?: string
+  status: string
+  expiresAt: string
+  createdAt: string
+}
+
+export interface PagedResult<T> {
+  items: T[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
+}
+
+export interface UserDto {
+  id: string
+  firstName: string
+  lastName: string
+  email: string
+  phoneNumber: string
+  whatsAppNumber?: string
+  country: string
+  rating: number
+  transactionCount: number
+  status: string
+  emailVerified: boolean
+  isAdmin: boolean
+}
+
+export interface AuthResponse {
+  accessToken: string
+  refreshToken: string
+  expiresAt: string
+  user: UserDto
+}
