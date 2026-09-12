@@ -25,10 +25,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="flex h-full">
       {/* Sidebar */}
-      <aside className="w-64 bg-[--color-sidebar] flex flex-col shrink-0">
+      <aside className="w-64 bg-sidebar flex flex-col shrink-0">
         <div className="p-6 border-b border-slate-700">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-[--color-primary] rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
               <span className="text-white text-sm font-bold">S</span>
             </div>
             <div>
@@ -47,7 +47,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 href={item.href}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                   active
-                    ? 'bg-[--color-primary] text-white'
+                    ? 'bg-primary text-white'
                     : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                 }`}
               >

@@ -55,15 +55,15 @@ export default function UsersPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Utilisateurs</h1>
-          <p className="text-[--color-muted-foreground] text-sm mt-1">
+          <p className="text-muted-foreground text-sm mt-1">
             {data?.total ?? '...'} utilisateurs enregistrés
           </p>
         </div>
       </div>
 
       {/* Search */}
-      <div className="bg-white rounded-xl border border-[--color-border] mb-4 px-4 py-3 flex items-center gap-3">
-        <span className="text-[--color-muted-foreground]">🔍</span>
+      <div className="bg-white rounded-xl border border-border mb-4 px-4 py-3 flex items-center gap-3">
+        <span className="text-muted-foreground">🔍</span>
         <input
           type="text"
           placeholder="Rechercher par nom, email..."
@@ -74,20 +74,20 @@ export default function UsersPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-[--color-border] overflow-hidden">
+      <div className="bg-white rounded-xl border border-border overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-[--color-border] bg-[--color-muted]">
-              <th className="text-left px-6 py-3 font-medium text-[--color-muted-foreground]">Utilisateur</th>
-              <th className="text-left px-6 py-3 font-medium text-[--color-muted-foreground]">Pays</th>
-              <th className="text-left px-6 py-3 font-medium text-[--color-muted-foreground]">Statut</th>
-              <th className="text-center px-6 py-3 font-medium text-[--color-muted-foreground]">Certifié</th>
-              <th className="text-right px-6 py-3 font-medium text-[--color-muted-foreground]">Note</th>
-              <th className="text-right px-6 py-3 font-medium text-[--color-muted-foreground]">Avis</th>
-              <th className="text-right px-6 py-3 font-medium text-[--color-muted-foreground]">Inscrit le</th>
+            <tr className="border-b border-border bg-muted">
+              <th className="text-left px-6 py-3 font-medium text-muted-foreground">Utilisateur</th>
+              <th className="text-left px-6 py-3 font-medium text-muted-foreground">Pays</th>
+              <th className="text-left px-6 py-3 font-medium text-muted-foreground">Statut</th>
+              <th className="text-center px-6 py-3 font-medium text-muted-foreground">Certifié</th>
+              <th className="text-right px-6 py-3 font-medium text-muted-foreground">Note</th>
+              <th className="text-right px-6 py-3 font-medium text-muted-foreground">Avis</th>
+              <th className="text-right px-6 py-3 font-medium text-muted-foreground">Inscrit le</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[--color-border]">
+          <tbody className="divide-y divide-border">
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <tr key={i} className="animate-pulse">
@@ -102,30 +102,30 @@ export default function UsersPage() {
               ))
             ) : data?.items.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-6 py-12 text-center text-[--color-muted-foreground]">
+                <td colSpan={7} className="px-6 py-12 text-center text-muted-foreground">
                   Aucun utilisateur trouvé
                 </td>
               </tr>
             ) : (
               data?.items.map(user => (
-                <tr key={user.id} className="hover:bg-[--color-muted] transition-colors">
+                <tr key={user.id} className="hover:bg-muted transition-colors">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-[--color-primary] text-white text-xs flex items-center justify-center font-bold shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-primary text-white text-xs flex items-center justify-center font-bold shrink-0">
                         {user.firstName[0]}
                       </div>
                       <div>
                         <p className="font-medium text-slate-900 flex items-center gap-1.5">
                           {user.firstName} {user.lastName}
                           {user.isCertified && (
-                            <span title="Utilisateur certifié" className="text-[--color-primary]">✓</span>
+                            <span title="Utilisateur certifié" className="text-primary">✓</span>
                           )}
                         </p>
-                        <p className="text-xs text-[--color-muted-foreground]">{user.email}</p>
+                        <p className="text-xs text-muted-foreground">{user.email}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-[--color-muted-foreground]">{user.country}</td>
+                  <td className="px-6 py-4 text-muted-foreground">{user.country}</td>
                   <td className="px-6 py-4">
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                       user.status === 'Active' ? 'bg-green-100 text-green-700' :
@@ -153,7 +153,7 @@ export default function UsersPage() {
                     {user.reviewCount > 0 ? `⭐ ${user.rating.toFixed(1)}` : '—'}
                   </td>
                   <td className="px-6 py-4 text-right text-slate-900">{user.reviewCount}</td>
-                  <td className="px-6 py-4 text-right text-[--color-muted-foreground]">
+                  <td className="px-6 py-4 text-right text-muted-foreground">
                     {new Date(user.createdAt).toLocaleDateString('fr-CA')}
                   </td>
                 </tr>
@@ -164,22 +164,22 @@ export default function UsersPage() {
 
         {/* Pagination */}
         {data && data.totalPages > 1 && (
-          <div className="px-6 py-4 border-t border-[--color-border] flex items-center justify-between">
-            <p className="text-sm text-[--color-muted-foreground]">
+          <div className="px-6 py-4 border-t border-border flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">
               Page {data.page} / {data.totalPages} — {data.total} utilisateurs
             </p>
             <div className="flex gap-2">
               <button
                 onClick={() => setPage(p => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="px-3 py-1.5 text-sm border border-[--color-border] rounded-lg disabled:opacity-40 hover:bg-[--color-muted] transition-colors"
+                className="px-3 py-1.5 text-sm border border-border rounded-lg disabled:opacity-40 hover:bg-muted transition-colors"
               >
                 ← Précédent
               </button>
               <button
                 onClick={() => setPage(p => Math.min(data.totalPages, p + 1))}
                 disabled={page === data.totalPages}
-                className="px-3 py-1.5 text-sm border border-[--color-border] rounded-lg disabled:opacity-40 hover:bg-[--color-muted] transition-colors"
+                className="px-3 py-1.5 text-sm border border-border rounded-lg disabled:opacity-40 hover:bg-muted transition-colors"
               >
                 Suivant →
               </button>

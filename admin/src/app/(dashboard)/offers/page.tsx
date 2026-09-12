@@ -21,7 +21,7 @@ export default function OffersPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Offres</h1>
-          <p className="text-[--color-muted-foreground] text-sm mt-1">
+          <p className="text-muted-foreground text-sm mt-1">
             {data?.total ?? '...'} offres au total
           </p>
         </div>
@@ -34,8 +34,8 @@ export default function OffersPage() {
               onClick={() => { setStatusFilter(s); setPage(1) }}
               className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-colors ${
                 statusFilter === s
-                  ? 'bg-[--color-primary] text-white'
-                  : 'border border-[--color-border] text-slate-600 hover:bg-[--color-muted]'
+                  ? 'bg-primary text-white'
+                  : 'border border-border text-slate-600 hover:bg-muted'
               }`}
             >
               {s || 'Toutes'}
@@ -44,20 +44,20 @@ export default function OffersPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-[--color-border] overflow-hidden">
+      <div className="bg-white rounded-xl border border-border overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-[--color-border] bg-[--color-muted]">
-              <th className="text-left px-6 py-3 font-medium text-[--color-muted-foreground]">Paire</th>
-              <th className="text-left px-6 py-3 font-medium text-[--color-muted-foreground]">Type</th>
-              <th className="text-right px-6 py-3 font-medium text-[--color-muted-foreground]">Taux</th>
-              <th className="text-right px-6 py-3 font-medium text-[--color-muted-foreground]">Montant</th>
-              <th className="text-left px-6 py-3 font-medium text-[--color-muted-foreground]">Créateur</th>
-              <th className="text-left px-6 py-3 font-medium text-[--color-muted-foreground]">Statut</th>
-              <th className="text-right px-6 py-3 font-medium text-[--color-muted-foreground]">Expiration</th>
+            <tr className="border-b border-border bg-muted">
+              <th className="text-left px-6 py-3 font-medium text-muted-foreground">Paire</th>
+              <th className="text-left px-6 py-3 font-medium text-muted-foreground">Type</th>
+              <th className="text-right px-6 py-3 font-medium text-muted-foreground">Taux</th>
+              <th className="text-right px-6 py-3 font-medium text-muted-foreground">Montant</th>
+              <th className="text-left px-6 py-3 font-medium text-muted-foreground">Créateur</th>
+              <th className="text-left px-6 py-3 font-medium text-muted-foreground">Statut</th>
+              <th className="text-right px-6 py-3 font-medium text-muted-foreground">Expiration</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[--color-border]">
+          <tbody className="divide-y divide-border">
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <tr key={i} className="animate-pulse">
@@ -70,18 +70,18 @@ export default function OffersPage() {
               ))
             ) : data?.items.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-6 py-12 text-center text-[--color-muted-foreground]">
+                <td colSpan={7} className="px-6 py-12 text-center text-muted-foreground">
                   Aucune offre trouvée
                 </td>
               </tr>
             ) : (
               data?.items.map(offer => (
-                <tr key={offer.id} className="hover:bg-[--color-muted] transition-colors">
+                <tr key={offer.id} className="hover:bg-muted transition-colors">
                   <td className="px-6 py-4">
                     <p className="font-medium text-slate-900">
                       {offer.sellCountryFlag} {offer.sellCurrency} → {offer.buyCountryFlag} {offer.buyCurrency}
                     </p>
-                    <p className="text-xs text-[--color-muted-foreground]">
+                    <p className="text-xs text-muted-foreground">
                       {offer.sellCountry} → {offer.buyCountry}
                     </p>
                   </td>
@@ -97,11 +97,11 @@ export default function OffersPage() {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <p className="text-slate-900">{offer.remainingAmount.toLocaleString()}</p>
-                    <p className="text-xs text-[--color-muted-foreground]">/ {offer.amount.toLocaleString()}</p>
+                    <p className="text-xs text-muted-foreground">/ {offer.amount.toLocaleString()}</p>
                   </td>
                   <td className="px-6 py-4">
                     <p className="font-medium">{offer.creator.firstName} {offer.creator.lastName}</p>
-                    <p className="text-xs text-[--color-muted-foreground]">{offer.creator.email}</p>
+                    <p className="text-xs text-muted-foreground">{offer.creator.email}</p>
                   </td>
                   <td className="px-6 py-4">
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
@@ -113,7 +113,7 @@ export default function OffersPage() {
                       {offer.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-right text-[--color-muted-foreground]">
+                  <td className="px-6 py-4 text-right text-muted-foreground">
                     {new Date(offer.expiresAt).toLocaleDateString('fr-CA')}
                   </td>
                 </tr>
@@ -123,22 +123,22 @@ export default function OffersPage() {
         </table>
 
         {data && data.totalPages > 1 && (
-          <div className="px-6 py-4 border-t border-[--color-border] flex items-center justify-between">
-            <p className="text-sm text-[--color-muted-foreground]">
+          <div className="px-6 py-4 border-t border-border flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">
               Page {data.page} / {data.totalPages} — {data.total} offres
             </p>
             <div className="flex gap-2">
               <button
                 onClick={() => setPage(p => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="px-3 py-1.5 text-sm border border-[--color-border] rounded-lg disabled:opacity-40 hover:bg-[--color-muted] transition-colors"
+                className="px-3 py-1.5 text-sm border border-border rounded-lg disabled:opacity-40 hover:bg-muted transition-colors"
               >
                 ← Précédent
               </button>
               <button
                 onClick={() => setPage(p => Math.min(data.totalPages, p + 1))}
                 disabled={page === data.totalPages}
-                className="px-3 py-1.5 text-sm border border-[--color-border] rounded-lg disabled:opacity-40 hover:bg-[--color-muted] transition-colors"
+                className="px-3 py-1.5 text-sm border border-border rounded-lg disabled:opacity-40 hover:bg-muted transition-colors"
               >
                 Suivant →
               </button>
