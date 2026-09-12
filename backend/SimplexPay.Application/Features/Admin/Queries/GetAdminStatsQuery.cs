@@ -17,25 +17,20 @@ public class GetAdminStatsHandler(
     {
         var weekAgo = DateTime.UtcNow.AddDays(-7);
 
-        var totalUsersTask = users.GetTotalCountAsync(ct);
-        var newUsersTask = users.GetCountSinceAsync(weekAgo, ct);
-        var devisesStatsTask = offers.GetStatsAsync(ct);
-        var kilosStatsTask = travelKilo.GetStatsAsync(ct);
-        var bateauStatsTask = boatShipping.GetStatsAsync(ct);
-
-        await Task.WhenAll(totalUsersTask, newUsersTask, devisesStatsTask, kilosStatsTask, bateauStatsTask);
-
-        // Agrégation des 3 catégories du marketplace.
-        var (dt, da, dn) = devisesStatsTask.Result;
-        var (kt, ka, kn) = kilosStatsTask.Result;
-        var (bt, ba, bn) = bateauStatsTask.Result;
+        // Sérialisé : tous ces repos partagent le même AppDbContext scoped ;
+        // Task.WhenAll parallèle throw "second operation started on this context".
+        var totalUsers = await users.GetTotalCountAsync(ct);
+        var newUsers = await users.GetCountSinceAsync(weekAgo, ct);
+        var (dt, da, dn) = await offers.GetStatsAsync(ct);
+        var (kt, ka, kn) = await travelKilo.GetStatsAsync(ct);
+        var (bt, ba, bn) = await boatShipping.GetStatsAsync(ct);
 
         return new AdminStatsDto(
-            TotalUsers: totalUsersTask.Result,
+            TotalUsers: totalUsers,
             TotalOffers: dt + kt + bt,
             ActiveOffers: da + ka + ba,
             TotalTransactions: 0,
-            NewUsersThisWeek: newUsersTask.Result,
+            NewUsersThisWeek: newUsers,
             NewOffersThisWeek: dn + kn + bn
         );
     }
