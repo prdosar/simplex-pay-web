@@ -82,3 +82,45 @@ export interface AdminStatsDto {
   newUsersThisWeek: number
   newOffersThisWeek: number
 }
+
+// Le DTO renvoyé par /api/travel-kilo (endpoint public, réutilisé côté admin pour lister).
+export interface TravelKiloOfferDto {
+  id: string
+  creatorId: string
+  creatorFirstName: string
+  creatorRating: number
+  creatorReviewCount: number
+  creatorIsCertified: boolean
+  availableKg: number
+  pricePerKg: number
+  travelDate: string
+  departureCity: string
+  destinationCity: string
+  departureCountryCode: string
+  destinationCountryCode: string
+  notes?: string
+  status: string
+  expiresAt: string
+  createdAt: string
+}
+
+// Le DTO renvoyé par /api/boat-shipping (endpoint public, réutilisé côté admin pour lister).
+export interface BoatShippingOfferDto {
+  id: string
+  creatorId: string
+  creatorFirstName: string
+  creatorRating: number
+  creatorReviewCount: number
+  creatorIsCertified: boolean
+  availableLbs: number
+  pricePerLb: number
+  shipDepartureDate: string
+  departurePort: string
+  destinationPort: string
+  departureCountryCode: string
+  destinationCountryCode: string
+  notes?: string
+  status: string
+  expiresAt: string
+  createdAt: string
+}
