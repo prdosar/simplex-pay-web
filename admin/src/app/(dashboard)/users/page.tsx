@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import useSWR from 'swr'
 import { api } from '@/lib/api'
+import EditUserModal from '@/components/EditUserModal'
 import type { PagedResult, AdminUserDto } from '@/types/api'
 
 export default function UsersPage() {
@@ -10,6 +11,7 @@ export default function UsersPage() {
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [pending, setPending] = useState<Set<string>>(new Set())
+  const [editing, setEditing] = useState<AdminUserDto | null>(null)
 
   const { data, isLoading, mutate } = useSWR<PagedResult<AdminUserDto>>(
     `/api/admin/users?pageNumber=${page}&pageSize=20${debouncedSearch ? `&search=${debouncedSearch}` : ''}`,
@@ -98,11 +100,12 @@ export default function UsersPage() {
                   <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-10 ml-auto" /></td>
                   <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-8 ml-auto" /></td>
                   <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-24 ml-auto" /></td>
+                  <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-16 ml-auto" /></td>
                 </tr>
               ))
             ) : data?.items.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-6 py-12 text-center text-muted-foreground">
+                <td colSpan={8} className="px-6 py-12 text-center text-muted-foreground">
                   Aucun utilisateur trouvé
                 </td>
               </tr>
@@ -187,6 +190,21 @@ export default function UsersPage() {
           </div>
         )}
       </div>
+
+      {editing && (
+        <EditUserModal
+          user={editing}
+          onClose={() => setEditing(null)}
+          onSaved={updated => {
+            // Optimistic replace in the list, puis close.
+            mutate(current => current && ({
+              ...current,
+              items: current.items.map(u => u.id === updated.id ? updated : u),
+            }), false)
+            setEditing(null)
+          }}
+        />
+      )}
     </div>
   )
 }

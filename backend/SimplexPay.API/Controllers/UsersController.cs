@@ -37,6 +37,22 @@ public class UsersController(IMediator mediator) : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>Met à jour son propre profil (firstName/lastName/country/phone/whatsapp). Email non modifiable.</summary>
+    [HttpPatch("me/profile")]
+    [Authorize]
+    public async Task<IActionResult> UpdateMyProfile([FromBody] UpdateProfileRequest req, CancellationToken ct)
+    {
+        var dto = await mediator.Send(new UpdateUserProfileCommand(
+            UserId: CurrentUserId,
+            FirstName: req.FirstName,
+            LastName: req.LastName,
+            Country: req.Country,
+            PhoneNumber: req.PhoneNumber,
+            WhatsAppNumber: req.WhatsAppNumber
+        ), ct);
+        return Ok(dto);
+    }
+
     [HttpPost("{userId:guid}/reviews")]
     [Authorize]
     [RequireVerifiedEmail]
@@ -70,3 +86,11 @@ public class UsersController(IMediator mediator) : ControllerBase
 }
 
 public record CreateReviewRequest(int Rating, string? Comment);
+
+public record UpdateProfileRequest(
+    string FirstName,
+    string LastName,
+    string Country,
+    string PhoneNumber,
+    string? WhatsAppNumber
+);

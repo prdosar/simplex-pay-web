@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SimplexPay.Application.Features.Admin.Commands;
 using SimplexPay.Application.Features.Admin.Queries;
+using SimplexPay.Application.Features.Users.Commands;
 
 namespace SimplexPay.API.Controllers;
 
@@ -47,6 +48,29 @@ public class AdminController(IMediator mediator) : ControllerBase
             return NotFound();
         }
     }
+
+    /// <summary>Admin met à jour le profil de n'importe quel user. Email non modifiable.</summary>
+    [HttpPatch("users/{userId:guid}/profile")]
+    public async Task<IActionResult> UpdateUserProfile(Guid userId, [FromBody] AdminUpdateUserProfileRequest req, CancellationToken ct)
+    {
+        var dto = await mediator.Send(new UpdateUserProfileCommand(
+            UserId: userId,
+            FirstName: req.FirstName,
+            LastName: req.LastName,
+            Country: req.Country,
+            PhoneNumber: req.PhoneNumber,
+            WhatsAppNumber: req.WhatsAppNumber
+        ), ct);
+        return Ok(dto);
+    }
 }
 
 public record CertifyRequest(bool IsCertified);
+
+public record AdminUpdateUserProfileRequest(
+    string FirstName,
+    string LastName,
+    string Country,
+    string PhoneNumber,
+    string? WhatsAppNumber
+);

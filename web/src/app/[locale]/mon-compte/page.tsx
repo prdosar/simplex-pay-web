@@ -79,11 +79,18 @@ export default function AccountPage() {
             </span>
           </div>
         </div>
-        <Link href={`/${locale}/creer-offre`}
-          className="px-5 py-2.5 text-white font-semibold rounded-xl transition-colors text-sm shrink-0"
-          style={{ background: '#0d9488' }}>
-          + {locale === 'fr' ? 'Nouvelle offre' : 'New offer'}
-        </Link>
+        <div className="flex flex-col gap-2 shrink-0">
+          <Link href={`/${locale}/creer-offre`}
+            className="px-5 py-2.5 text-white font-semibold rounded-xl transition-colors text-sm text-center"
+            style={{ background: '#0d9488' }}>
+            + {locale === 'fr' ? 'Nouvelle offre' : 'New offer'}
+          </Link>
+          <Link href={`/${locale}/mon-compte/profil/modifier`}
+            className="px-5 py-2 border font-semibold rounded-xl text-sm text-center transition-colors"
+            style={{ borderColor: '#e2e8f0', color: '#0d9488' }}>
+            {locale === 'fr' ? 'Modifier profil' : 'Edit profile'}
+          </Link>
+        </div>
       </div>
 
       {/* Tabs */}

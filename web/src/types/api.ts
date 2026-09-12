@@ -174,16 +174,18 @@ export interface AuthResponse {
   user: UserDto
 }
 
+// Aligné avec backend/SimplexPay.Application/Features/Auth/Dtos/AuthResponse.cs UserDto.
 export interface UserDto {
   id: string
   firstName: string
   lastName: string
   email: string
-  phone: string
+  phoneNumber: string
+  whatsAppNumber?: string
   country: string
-  status: string
-  emailVerified: boolean
   rating: number
   transactionCount: number
-  createdAt: string
+  status: string
+  emailVerified: boolean
+  isAdmin: boolean
 }

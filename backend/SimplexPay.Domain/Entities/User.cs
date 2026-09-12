@@ -108,6 +108,18 @@ public class User : BaseEntity
         MarkUpdated();
     }
 
+    /// <summary>Met à jour les champs modifiables du profil. L'email n'est PAS modifiable ici
+    /// (contrainte métier — l'email est l'identifiant + a un statut de vérification).</summary>
+    public void UpdateProfile(string firstName, string lastName, string country, string phoneNumber, string? whatsAppNumber)
+    {
+        FirstName = firstName;
+        LastName = lastName;
+        Country = country;
+        PhoneNumber = phoneNumber;
+        WhatsAppNumber = string.IsNullOrWhiteSpace(whatsAppNumber) ? null : whatsAppNumber;
+        MarkUpdated();
+    }
+
     public void GrantAdmin()
     {
         IsAdmin = true;
