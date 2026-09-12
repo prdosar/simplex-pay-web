@@ -18,6 +18,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<BoatShippingOffer> BoatShippingOffers => Set<BoatShippingOffer>();
     public DbSet<Transaction> Transactions => Set<Transaction>();
     public DbSet<Review> Reviews => Set<Review>();
+    public DbSet<ActivityLog> ActivityLogs => Set<ActivityLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -83,6 +83,23 @@ export interface AdminStatsDto {
   newOffersThisWeek: number
 }
 
+export interface ActivityLogDto {
+  id: string
+  timestamp: string
+  userId?: string
+  userFirstName?: string
+  userLastName?: string
+  userEmail?: string
+  ipAddress: string
+  userAgent?: string
+  method: string
+  path: string
+  action: string
+  statusCode: number
+  country?: string
+  city?: string
+}
+
 // Le DTO renvoyé par /api/travel-kilo (endpoint public, réutilisé côté admin pour lister).
 export interface TravelKiloOfferDto {
   id: string

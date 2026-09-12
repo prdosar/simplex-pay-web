@@ -99,6 +99,9 @@ if (app.Environment.IsDevelopment())
 app.UseCors("AllowFrontends");
 app.UseAuthentication();
 app.UseAuthorization();
+// ActivityLoggingMiddleware après auth (pour capturer l'UserId) et après CORS (pour ne pas
+// logger les preflights OPTIONS). Il tourne pour chaque requête mais filtre en interne.
+app.UseMiddleware<ActivityLoggingMiddleware>();
 app.MapControllers();
 app.MapHub<MarketplaceHub>("/hubs/marketplace");
 

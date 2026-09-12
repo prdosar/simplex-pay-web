@@ -35,6 +35,14 @@ public static class DependencyInjection
         });
         services.AddScoped<IExchangeRateService, ExchangeRateService>();
 
+        // Activity logging + geolocation IP (cache in-memory partagé).
+        services.AddScoped<IActivityLogRepository, ActivityLogRepository>();
+        services.AddHttpClient("geoip", c =>
+        {
+            c.DefaultRequestHeaders.UserAgent.ParseAdd("SimplexPay/1.0");
+        });
+        services.AddSingleton<IGeoIpService, GeoIpService>();
+
         return services;
     }
 }

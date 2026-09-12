@@ -16,6 +16,32 @@ public class AdminController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> GetStats(CancellationToken ct) =>
         Ok(await mediator.Send(new GetAdminStatsQuery(), ct));
 
+    /// <summary>Journal d'activité. Filtres : action, ipAddress, country (ISO 2), userId, from, to (ISO date).</summary>
+    [HttpGet("activity-logs")]
+    public async Task<IActionResult> GetActivityLogs(
+        [FromQuery] string? action,
+        [FromQuery] string? ipAddress,
+        [FromQuery] string? country,
+        [FromQuery] Guid? userId,
+        [FromQuery] DateTime? from,
+        [FromQuery] DateTime? to,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        CancellationToken ct = default)
+    {
+        var result = await mediator.Send(new GetActivityLogsQuery(
+            Action: action,
+            IpAddress: ipAddress,
+            Country: country,
+            UserId: userId,
+            From: from,
+            To: to,
+            Page: page,
+            PageSize: pageSize
+        ), ct);
+        return Ok(result);
+    }
+
     [HttpGet("users")]
     public async Task<IActionResult> GetUsers(
         [FromQuery] string? search,
