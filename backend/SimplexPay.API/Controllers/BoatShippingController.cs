@@ -50,6 +50,14 @@ public class BoatShippingController(IMediator mediator) : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("facets/countries")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetCountryFacets(CancellationToken ct)
+    {
+        var result = await mediator.Send(new GetBoatShippingCountryFacetsQuery(), ct);
+        return Ok(result);
+    }
+
     [HttpGet("{id:guid}")]
     [AllowAnonymous]
     public async Task<IActionResult> GetOffer(Guid id, CancellationToken ct)

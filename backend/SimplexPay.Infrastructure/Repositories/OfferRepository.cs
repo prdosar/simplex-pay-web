@@ -69,6 +69,19 @@ public class OfferRepository(AppDbContext db) : IOfferRepository
         return raw.Select(r => new PaymentMethodFacet(r.PaymentMethodId, r.Name, r.Count)).ToList();
     }
 
+    public async Task<IList<CountryFacet>> GetCountryFacetsAsync(CancellationToken ct)
+    {
+        var now = DateTime.UtcNow;
+        // Compte les offres actives (Open/PartiallyFilled, non expirées) par pays vendeur.
+        // Une offre multi-pays est comptée dans chacun de ses pays.
+        var raw = await db.OfferCountries
+            .Where(oc => (oc.Offer.Status == OfferStatus.Open || oc.Offer.Status == OfferStatus.PartiallyFilled) && oc.Offer.ExpiresAt > now)
+            .GroupBy(oc => oc.CountryCode)
+            .Select(g => new { Code = g.Key, Count = g.Count() })
+            .ToListAsync(ct);
+        return raw.Select(r => new CountryFacet(r.Code, r.Count)).ToList();
+    }
+
     public async Task<(IList<Offer> Items, int Total)> GetByUserIdPagedAsync(Guid userId, int page, int pageSize, CancellationToken ct)
     {
         var query = db.Offers

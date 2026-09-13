@@ -14,12 +14,14 @@ interface Props {
   placeholder?: string
   // Affiche le code devise après le nom (utile pour l'onglet Devises).
   showCurrencyCode?: boolean
+  // Compte d'offres par code pays — suffixé « - N » après le libellé.
+  counts?: Record<string, number>
 }
 
 /** Combobox pays avec drapeaux — remplace le <select> natif qui ne peut pas rendre d'<img>. */
 export default function CountrySelect({
   value, onChange, countries, locale,
-  allowEmpty = true, emptyLabel, placeholder, showCurrencyCode = false,
+  allowEmpty = true, emptyLabel, placeholder, showCurrencyCode = false, counts,
 }: Props) {
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
@@ -41,8 +43,11 @@ export default function CountrySelect({
     }
   }, [open])
 
-  const label = (c: CountryDto) =>
-    (locale === 'fr' ? c.nameFr : c.name) + (showCurrencyCode ? ` (${c.currencyCode})` : '')
+  const label = (c: CountryDto) => {
+    const base = (locale === 'fr' ? c.nameFr : c.name) + (showCurrencyCode ? ` (${c.currencyCode})` : '')
+    const n = counts?.[c.code]
+    return n && n > 0 ? `${base} - ${n}` : base
+  }
 
   return (
     <div ref={rootRef} className="relative">

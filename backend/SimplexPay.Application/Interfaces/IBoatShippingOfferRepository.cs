@@ -21,6 +21,7 @@ public interface IBoatShippingOfferRepository
     Task<(IList<BoatShippingOffer> Items, int Total)> GetByUserIdPagedAsync(
         Guid userId, int page, int pageSize, CancellationToken ct = default);
     Task<(int Total, int Active, int NewThisWeek)> GetStatsAsync(CancellationToken ct = default);
+    Task<IList<CountryFacet>> GetCountryFacetsAsync(CancellationToken ct = default);
     Task AddAsync(BoatShippingOffer offer, CancellationToken ct = default);
     Task SaveChangesAsync(CancellationToken ct = default);
 }

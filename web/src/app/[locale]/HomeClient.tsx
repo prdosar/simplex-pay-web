@@ -13,7 +13,7 @@ import OfferCard from '@/components/offers/OfferCard'
 import TravelKiloCard from '@/components/offers/TravelKiloCard'
 import BoatShippingCard from '@/components/offers/BoatShippingCard'
 import CountrySelect from '@/components/ui/CountrySelect'
-import type { PagedResult, OfferDto, CountryDto, PaymentMethodFacet, TravelKiloOfferDto, BoatShippingOfferDto } from '@/types/api'
+import type { PagedResult, OfferDto, CountryDto, PaymentMethodFacet, CountryFacet, TravelKiloOfferDto, BoatShippingOfferDto } from '@/types/api'
 
 type Tab = 'devises' | 'kilos' | 'bateau'
 type SortOption = 'recent' | 'rate_desc' | 'rate_asc' | 'amount_desc'
@@ -104,6 +104,25 @@ export default function HomeClient({ locale }: { locale: string }) {
     '/api/boat-shipping?pageSize=1',
     (url: string) => api.get<PagedResult<BoatShippingOfferDto>>(url)
   )
+
+  // Facettes pays (nombre d'offres actives par code pays) — un fetch par catégorie,
+  // affiché en suffixe « - N » dans les dropdowns de pays.
+  const { data: devisesCountryFacets } = useSWR<CountryFacet[]>(
+    '/api/offers/facets/countries',
+    (url: string) => api.get<CountryFacet[]>(url)
+  )
+  const { data: kilosCountryFacets } = useSWR<CountryFacet[]>(
+    '/api/travel-kilo/facets/countries',
+    (url: string) => api.get<CountryFacet[]>(url)
+  )
+  const { data: bateauCountryFacets } = useSWR<CountryFacet[]>(
+    '/api/boat-shipping/facets/countries',
+    (url: string) => api.get<CountryFacet[]>(url)
+  )
+
+  const devisesCountryCounts = Object.fromEntries((devisesCountryFacets ?? []).map(f => [f.code, f.count]))
+  const kilosCountryCounts   = Object.fromEntries((kilosCountryFacets   ?? []).map(f => [f.code, f.count]))
+  const bateauCountryCounts  = Object.fromEntries((bateauCountryFacets  ?? []).map(f => [f.code, f.count]))
 
   const sellCountries = countries?.filter(c => c.currencyType === 'Sell') ?? []
   const selectedCountry = countries?.find(c => c.code === sellCountry)
@@ -286,6 +305,10 @@ export default function HomeClient({ locale }: { locale: string }) {
     if (category === 'devises') globalMutate('/api/offers?pageSize=1')
     if (category === 'kilos')   globalMutate('/api/travel-kilo?pageSize=1')
     if (category === 'bateau')  globalMutate('/api/boat-shipping?pageSize=1')
+    // Facettes pays (comptes affichés dans les dropdowns)
+    if (category === 'devises') globalMutate('/api/offers/facets/countries')
+    if (category === 'kilos')   globalMutate('/api/travel-kilo/facets/countries')
+    if (category === 'bateau')  globalMutate('/api/boat-shipping/facets/countries')
     // Listes actives : revalider toute clé qui commence par l'URL de base.
     globalMutate((key: string | null | undefined) => {
       if (typeof key !== 'string') return false
@@ -588,6 +611,7 @@ export default function HomeClient({ locale }: { locale: string }) {
                         locale={locale}
                         emptyLabel={t('offers.allCountries')}
                         showCurrencyCode
+                        counts={devisesCountryCounts}
                       />
                     </div>
 
@@ -782,6 +806,7 @@ export default function HomeClient({ locale }: { locale: string }) {
                         countries={countries ?? []}
                         locale={locale}
                         emptyLabel={t('travelKilo.allCountries')}
+                        counts={kilosCountryCounts}
                       />
                     </div>
 
@@ -795,6 +820,7 @@ export default function HomeClient({ locale }: { locale: string }) {
                         countries={countries ?? []}
                         locale={locale}
                         emptyLabel={t('travelKilo.allCountries')}
+                        counts={kilosCountryCounts}
                       />
                     </div>
 
@@ -936,6 +962,7 @@ export default function HomeClient({ locale }: { locale: string }) {
                         countries={countries ?? []}
                         locale={locale}
                         emptyLabel={t('boatShipping.allCountries')}
+                        counts={bateauCountryCounts}
                       />
                     </div>
 
@@ -949,6 +976,7 @@ export default function HomeClient({ locale }: { locale: string }) {
                         countries={countries ?? []}
                         locale={locale}
                         emptyLabel={t('boatShipping.allCountries')}
+                        counts={bateauCountryCounts}
                       />
                     </div>
 

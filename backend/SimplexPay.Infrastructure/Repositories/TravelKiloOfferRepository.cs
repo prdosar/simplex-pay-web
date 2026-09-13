@@ -92,6 +92,29 @@ public class TravelKiloOfferRepository(AppDbContext db) : ITravelKiloOfferReposi
         return (items, total);
     }
 
+    public async Task<IList<CountryFacet>> GetCountryFacetsAsync(CancellationToken ct)
+    {
+        var now = DateTime.UtcNow;
+        // Compte les offres actives par pays impliqué (départ OU destination) — deux group by
+        // séparés puis fusion en mémoire (EF Core ne translate pas SelectMany sur tableau inline).
+        var active = db.TravelKiloOffers
+            .Where(o => (o.Status == OfferStatus.Open || o.Status == OfferStatus.PartiallyFilled) && o.ExpiresAt > now);
+
+        var dep = await active
+            .GroupBy(o => o.DepartureCountryCode)
+            .Select(g => new { Code = g.Key, Count = g.Count() })
+            .ToListAsync(ct);
+        var dest = await active
+            .GroupBy(o => o.DestinationCountryCode)
+            .Select(g => new { Code = g.Key, Count = g.Count() })
+            .ToListAsync(ct);
+
+        return dep.Concat(dest)
+            .GroupBy(x => x.Code)
+            .Select(g => new CountryFacet(g.Key, g.Sum(x => x.Count)))
+            .ToList();
+    }
+
     public async Task<(int Total, int Active, int NewThisWeek)> GetStatsAsync(CancellationToken ct)
     {
         var now = DateTime.UtcNow;

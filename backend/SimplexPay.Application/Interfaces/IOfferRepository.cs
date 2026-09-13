@@ -8,6 +8,7 @@ public interface IOfferRepository
     Task<Offer?> GetByIdWithDetailsAsync(Guid id, CancellationToken ct = default);
     Task<(IList<Offer> Items, int Total)> GetPagedAsync(OfferFilter filter, CancellationToken ct = default);
     Task<IList<PaymentMethodFacet>> GetPaymentMethodFacetsAsync(OfferFilter filter, CancellationToken ct = default);
+    Task<IList<CountryFacet>> GetCountryFacetsAsync(CancellationToken ct = default);
     Task<(int Total, int Active, int NewThisWeek)> GetStatsAsync(CancellationToken ct = default);
     Task<(IList<Offer> Items, int Total)> GetByUserIdPagedAsync(Guid userId, int page, int pageSize, CancellationToken ct = default);
     Task AddAsync(Offer offer, CancellationToken ct = default);
@@ -34,3 +35,5 @@ public record OfferFilter(
 );
 
 public record PaymentMethodFacet(Guid Id, string Name, int Count);
+
+public record CountryFacet(string Code, int Count);

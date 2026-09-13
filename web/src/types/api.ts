@@ -159,6 +159,11 @@ export interface PaymentMethodFacet {
   count: number
 }
 
+export interface CountryFacet {
+  code: string
+  count: number
+}
+
 export interface PagedResult<T> {
   items: T[]
   total: number

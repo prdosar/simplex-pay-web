@@ -80,6 +80,15 @@ public class OffersController(IMediator mediator) : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>Retourne le nombre d'offres actives par pays vendeur (pour le libellé des dropdowns).</summary>
+    [HttpGet("facets/countries")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetCountryFacets(CancellationToken ct)
+    {
+        var result = await mediator.Send(new GetOfferCountryFacetsQuery(), ct);
+        return Ok(result);
+    }
+
     /// <summary>Retourne le détail d'une offre.</summary>
     [HttpGet("{id:guid}")]
     [AllowAnonymous]
