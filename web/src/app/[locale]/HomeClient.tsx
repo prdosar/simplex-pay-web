@@ -27,7 +27,7 @@ const SORT_KEYS_BS: SortOptionBs[] = ['recent', 'price_asc', 'price_desc', 'lbs_
 export default function HomeClient({ locale }: { locale: string }) {
   const t = useTranslations('home')
   const tOffers = useTranslations('offers')
-  const { isAuthenticated, user } = useAuth()
+  const { isAuthenticated, user, isLoading: authLoading } = useAuth()
 
   const [activeTab, setActiveTab] = useState<Tab>('devises')
 
@@ -110,18 +110,19 @@ export default function HomeClient({ locale }: { locale: string }) {
   const paymentMethods = selectedCountry?.paymentMethods ?? []
 
   useEffect(() => {
-    if (!countries) return
-    // Devises: prefer user.country if it's a valid Sell country, else first Sell country.
-    if (sellCountries.length > 0 && !sellCountry) {
-      const preferred = user?.country && sellCountries.find(c => c.code === user.country)
-      setSellCountry(preferred ? preferred.code : sellCountries[0].code)
+    if (!countries || authLoading) return
+    // Défaut « tous les pays » sauf si l'utilisateur connecté a défini son pays.
+    // Devises: applique user.country si c'est un pays vendeur valide, sinon reste vide.
+    if (user?.country && !sellCountry) {
+      const preferred = sellCountries.find(c => c.code === user.country)
+      if (preferred) setSellCountry(preferred.code)
     }
-    // Kilos & Fret: default departure to user.country (destination stays empty).
+    // Kilos & Fret: applique user.country comme pays de départ (destination reste vide).
     if (user?.country && countries.some(c => c.code === user.country)) {
       if (!tkDeptCC) setTkDeptCC(user.country)
       if (!bsDeptCC) setBsDeptCC(user.country)
     }
-  }, [countries, user]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [countries, user, authLoading]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function buildFacetsQuery() {
     const p = new URLSearchParams()
@@ -585,9 +586,8 @@ export default function HomeClient({ locale }: { locale: string }) {
                         onChange={handleCountryChange}
                         countries={sellCountries}
                         locale={locale}
-                        allowEmpty={false}
+                        emptyLabel={t('offers.allCountries')}
                         showCurrencyCode
-                        placeholder={t('offers.selectCountry')}
                       />
                     </div>
 

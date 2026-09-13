@@ -53,6 +53,7 @@
       "paymentLabel": "Moyen de paiement",
       "amountLabel": "Montant disponible",
       "allMethods": "Tous les modes",
+      "allCountries": "Tous les pays",
       "selectCountry": "Sélectionnez un pays",
       "clearSelection": "× Effacer sélection",
       "clearFilters": "Effacer les filtres ({count})",

@@ -53,6 +53,7 @@
       "paymentLabel": "Payment method",
       "amountLabel": "Available amount",
       "allMethods": "All methods",
+      "allCountries": "All countries",
       "selectCountry": "Select a country first",
       "clearSelection": "× Clear selection",
       "clearFilters": "Clear filters ({count})",
