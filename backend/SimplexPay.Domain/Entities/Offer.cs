@@ -35,7 +35,8 @@ public class Offer : BaseEntity
     public decimal? MaxAmount { get; private set; }
     public string? Notes { get; private set; }
     public OfferStatus Status { get; private set; } = OfferStatus.Open;
-    public DateTime ExpiresAt { get; private set; }
+    // Nullable = ne jamais expirer. Seul le créateur peut clôturer via Cancel().
+    public DateTime? ExpiresAt { get; private set; }
 
     private readonly List<OfferCountry> _countries = [];
     private readonly List<OfferPaymentMethod> _paymentMethods = [];
@@ -65,7 +66,7 @@ public class Offer : BaseEntity
         decimal minAmount,
         decimal? maxAmount,
         string? notes,
-        int expiryHours = 24)
+        int? expiryHours = null)
     {
         if (amount <= 0) throw new ArgumentException("Le montant doit être positif.");
         if (rateMode == OfferRateMode.Fixed && (rate is null || rate <= 0))
@@ -95,7 +96,7 @@ public class Offer : BaseEntity
             MinAmount = minAmount,
             MaxAmount = maxAmount,
             Notes = notes,
-            ExpiresAt = DateTime.UtcNow.AddHours(expiryHours)
+            ExpiresAt = expiryHours is > 0 ? DateTime.UtcNow.AddHours(expiryHours.Value) : null
         };
         foreach (var code in codes)
             offer._countries.Add(OfferCountry.Create(offer.Id, code));
@@ -136,7 +137,7 @@ public class Offer : BaseEntity
         decimal minAmount,
         decimal? maxAmount,
         string? notes,
-        DateTime expiresAt,
+        DateTime? expiresAt,
         OfferStatus status)
     {
         if (amount <= 0) throw new ArgumentException("Le montant doit être positif.");

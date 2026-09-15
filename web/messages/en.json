@@ -240,6 +240,8 @@
     "minAmount": "Minimum amount per trade",
     "notes": "Notes (optional)",
     "expiryHours": "Validity duration",
+    "expiryNever": "Never expires",
+    "expiryHint": "You can always close your offer manually.",
     "paymentMethods": "Offered payment methods",
     "paymentMethodsHint": "Check the ones you offer",
     "paymentSelectAll": "Offer all",

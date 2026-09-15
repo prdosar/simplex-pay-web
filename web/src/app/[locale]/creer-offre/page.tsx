@@ -62,7 +62,7 @@ export default function CreateOfferPage() {
     rate: '',
     minAmount: '',
     notes: '',
-    expiryHours: '48',
+    expiryHours: 'never',
   })
   const [sellCountryCodes, setSellCountryCodes] = useState<string[]>([])
   const [selectedPaymentMethods, setSelectedPaymentMethods] = useState<string[]>([])
@@ -272,7 +272,7 @@ export default function CreateOfferPage() {
         rate: form.rateMode === 'Fixed' ? Number(form.rate) : null,
         minAmount: Number(form.minAmount),
         notes: form.notes || null,
-        expiryHours: Number(form.expiryHours),
+        expiryHours: form.expiryHours === 'never' ? null : Number(form.expiryHours),
         paymentMethodIds: selectedPaymentMethods,
       })
       setSuccess(true)
@@ -527,11 +527,13 @@ export default function CreateOfferPage() {
           <div>
             <label className="block text-sm font-medium mb-1.5">{t('expiryHours')}</label>
             <select value={form.expiryHours} onChange={setF('expiryHours')} className={SELECT_CLS}>
+              <option value="never">{t('expiryNever')}</option>
               <option value="24">24h</option>
               <option value="48">48h</option>
               <option value="72">72h</option>
               <option value="168">7 {locale === 'fr' ? 'jours' : 'days'}</option>
             </select>
+            <p className="text-xs text-[--color-muted-foreground] mt-1">{t('expiryHint')}</p>
           </div>
           </div>
 

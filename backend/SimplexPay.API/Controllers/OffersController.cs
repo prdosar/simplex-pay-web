@@ -177,7 +177,8 @@ public record UpdateOfferRequest(
     decimal MinAmount,
     decimal? MaxAmount,
     string? Notes,
-    DateTime ExpiresAt,
+    // Null = ne jamais expirer.
+    DateTime? ExpiresAt,
     string Status,
     IList<Guid>? PaymentMethodIds,
     // Null = pas de changement. Sinon liste complète des pays (≥1, tous même devise que l'offre).
@@ -193,6 +194,7 @@ public record CreateOfferRequest(
     decimal? Rate,
     decimal MinAmount,
     string? Notes,
-    int ExpiryHours = 24,
+    // Null (défaut) = ne jamais expirer. Le créateur clôture manuellement via /cancel.
+    int? ExpiryHours = null,
     IList<Guid>? PaymentMethodIds = null
 );

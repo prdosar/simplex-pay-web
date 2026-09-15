@@ -90,7 +90,7 @@ export interface OfferDto {
   minAmount: number
   maxAmount: number | null
   status: string
-  expiresAt: string
+  expiresAt: string | null
   createdAt: string
   creator: OfferCreatorDto
   paymentMethods: OfferPaymentMethodDto[]

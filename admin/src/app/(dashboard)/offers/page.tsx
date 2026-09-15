@@ -170,7 +170,7 @@ function DevisesTable({ data, isLoading }: { data?: PagedResult<AdminOfferDto>; 
                 <p className="text-xs text-muted-foreground">{offer.creator.email}</p>
               </td>
               <td className="px-6 py-4"><StatusPill status={offer.status} /></td>
-              <td className="px-6 py-4 text-right text-muted-foreground">{new Date(offer.expiresAt).toLocaleDateString('fr-CA')}</td>
+              <td className="px-6 py-4 text-right text-muted-foreground">{offer.expiresAt ? new Date(offer.expiresAt).toLocaleDateString('fr-CA') : '—'}</td>
             </tr>
           ))}
       </tbody>

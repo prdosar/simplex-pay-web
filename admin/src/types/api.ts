@@ -64,7 +64,7 @@ export interface AdminOfferDto {
   maxAmount: number
   notes?: string
   status: string
-  expiresAt: string
+  expiresAt: string | null
   createdAt: string
   creator: {
     id: string

@@ -23,7 +23,8 @@ public record OfferDto(
     decimal MinAmount,
     decimal? MaxAmount,
     string Status,
-    DateTime ExpiresAt,
+    // Null = ne jamais expirer (offres devises). Le créateur clôture manuellement.
+    DateTime? ExpiresAt,
     DateTime CreatedAt,
     OfferCreatorDto Creator,
     IList<OfferPaymentMethodDto> PaymentMethods,

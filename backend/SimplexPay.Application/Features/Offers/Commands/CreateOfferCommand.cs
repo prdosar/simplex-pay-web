@@ -16,7 +16,8 @@ public record CreateOfferCommand(
     decimal? Rate,                     // requis uniquement si RateMode == Fixed
     decimal MinAmount,
     string? Notes,
-    int ExpiryHours = 24,
+    // Null (défaut) = ne jamais expirer. Sinon nombre d'heures avant expiration (legacy).
+    int? ExpiryHours = null,
     IList<Guid>? PaymentMethodIds = null
 ) : IRequest<OfferDto>;
 
@@ -39,7 +40,8 @@ public class CreateOfferCommandValidator : AbstractValidator<CreateOfferCommand>
             .WithMessage("Le taux doit être renseigné et positif quand RateMode = Fixed.");
         RuleFor(x => x.MinAmount).GreaterThan(0);
         RuleFor(x => x.Notes).MaximumLength(500).When(x => x.Notes != null);
-        RuleFor(x => x.ExpiryHours).InclusiveBetween(1, 168);
+        RuleFor(x => x.ExpiryHours).InclusiveBetween(1, 168)
+            .When(x => x.ExpiryHours.HasValue);
     }
 }
 

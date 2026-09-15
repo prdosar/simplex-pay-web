@@ -75,7 +75,7 @@ public class OfferRepository(AppDbContext db) : IOfferRepository
         // Compte les offres actives (Open/PartiallyFilled, non expirées) par pays vendeur.
         // Une offre multi-pays est comptée dans chacun de ses pays.
         var raw = await db.OfferCountries
-            .Where(oc => (oc.Offer.Status == OfferStatus.Open || oc.Offer.Status == OfferStatus.PartiallyFilled) && oc.Offer.ExpiresAt > now)
+            .Where(oc => (oc.Offer.Status == OfferStatus.Open || oc.Offer.Status == OfferStatus.PartiallyFilled) && (oc.Offer.ExpiresAt == null || oc.Offer.ExpiresAt > now))
             .GroupBy(oc => oc.CountryCode)
             .Select(g => new { Code = g.Key, Count = g.Count() })
             .ToListAsync(ct);
@@ -106,7 +106,7 @@ public class OfferRepository(AppDbContext db) : IOfferRepository
         var now = DateTime.UtcNow;
         var weekAgo = now.AddDays(-7);
         var total = await db.Offers.CountAsync(ct);
-        var active = await db.Offers.CountAsync(o => (o.Status == OfferStatus.Open || o.Status == OfferStatus.PartiallyFilled) && o.ExpiresAt > now, ct);
+        var active = await db.Offers.CountAsync(o => (o.Status == OfferStatus.Open || o.Status == OfferStatus.PartiallyFilled) && (o.ExpiresAt == null || o.ExpiresAt > now), ct);
         var newThisWeek = await db.Offers.CountAsync(o => o.CreatedAt >= weekAgo, ct);
         return (total, active, newThisWeek);
     }
@@ -172,7 +172,8 @@ public class OfferRepository(AppDbContext db) : IOfferRepository
         if (filter.MinRating.HasValue)
             query = query.Where(o => o.User.Rating >= filter.MinRating.Value);
 
-        query = query.Where(o => o.ExpiresAt > DateTime.UtcNow);
+        var utcNow = DateTime.UtcNow;
+        query = query.Where(o => o.ExpiresAt == null || o.ExpiresAt > utcNow);
 
         return query;
     }

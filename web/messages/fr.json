@@ -240,6 +240,8 @@
     "minAmount": "Montant minimum par tranche",
     "notes": "Notes (optionnel)",
     "expiryHours": "Durée de validité",
+    "expiryNever": "Ne jamais expirer",
+    "expiryHint": "Vous pouvez toujours clôturer votre offre manuellement.",
     "paymentMethods": "Moyens de paiement proposés",
     "paymentMethodsHint": "Cochez ceux que vous proposez",
     "paymentSelectAll": "Tout proposer",

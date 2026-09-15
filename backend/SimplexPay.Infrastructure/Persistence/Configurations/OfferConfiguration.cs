@@ -21,6 +21,7 @@ public class OfferConfiguration : IEntityTypeConfiguration<Offer>
         builder.Property(o => o.Type).HasConversion<string>();
         builder.Property(o => o.Status).HasConversion<string>();
         builder.Property(o => o.Notes).HasMaxLength(500);
+        builder.Property(o => o.ExpiresAt).IsRequired(false);
 
         builder.HasOne(o => o.User)
             .WithMany(u => u.Offers)
@@ -46,7 +47,8 @@ public class OfferConfiguration : IEntityTypeConfiguration<Offer>
         builder.HasIndex(o => new { o.SellCurrencyCode, o.BuyCurrencyCode, o.Status });
         builder.HasIndex(o => new { o.Type, o.Status });
         builder.HasIndex(o => o.UserId);
-        // (Status, ExpiresAt) : WHERE Status IN (Open, PartiallyFilled) AND ExpiresAt > now() — chaque list query.
+        // (Status, ExpiresAt) : WHERE Status IN (Open, PartiallyFilled) AND (ExpiresAt IS NULL OR ExpiresAt > now()).
+        // ExpiresAt nullable depuis 2026-09-15 — offres devises n'expirent plus par défaut.
         builder.HasIndex(o => new { o.Status, o.ExpiresAt });
         // ORDER BY CreatedAt DESC (default sort "recent")
         builder.HasIndex(o => o.CreatedAt);

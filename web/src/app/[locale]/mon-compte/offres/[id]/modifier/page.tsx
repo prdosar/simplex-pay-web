@@ -16,9 +16,9 @@ import type { OfferDto, PaymentMethodDto } from '@/types/api'
 const INPUT = 'w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0d9488]'
 const LABEL = 'block text-xs font-bold uppercase tracking-[0.06em] mb-2'
 
-// datetime-local expects "YYYY-MM-DDTHH:mm" — trim seconds and TZ.
-function isoToLocalInput(iso: string): string {
-  return iso.slice(0, 16)
+// datetime-local expects "YYYY-MM-DDTHH:mm" — trim seconds and TZ. Null = pas d'expiration.
+function isoToLocalInput(iso: string | null): string {
+  return iso ? iso.slice(0, 16) : ''
 }
 
 export default function EditDevisesOfferPage({ params }: { params: Promise<{ id: string }> }) {
@@ -142,7 +142,7 @@ export default function EditDevisesOfferPage({ params }: { params: Promise<{ id:
         minAmount: parseFloat(minAmount),
         maxAmount: maxAmount ? parseFloat(maxAmount) : null,
         notes: notes.trim() || null,
-        expiresAt: new Date(expiresAt).toISOString(),
+        expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
         status: uiToBackend(status),
         paymentMethodIds: Array.from(selectedPMs),
         sellCountryCodes,
@@ -283,6 +283,12 @@ export default function EditDevisesOfferPage({ params }: { params: Promise<{ id:
           <div>
             <label className={LABEL} style={{ color: '#64748b' }}>{locale === 'fr' ? "Expire le" : 'Expires at'}</label>
             <input type="datetime-local" value={expiresAt} onChange={e => setExpiresAt(e.target.value)} className={INPUT} style={{ borderColor: '#e2e8f0' }} />
+            <div className="flex items-center gap-2 mt-1.5 text-xs" style={{ color: '#64748b' }}>
+              <label className="flex items-center gap-1.5 cursor-pointer">
+                <input type="checkbox" checked={!expiresAt} onChange={e => setExpiresAt(e.target.checked ? '' : isoToLocalInput(new Date(Date.now() + 48*3600*1000).toISOString()))} style={{ accentColor: '#0d9488' }} />
+                {locale === 'fr' ? "Ne jamais expirer" : 'Never expires'}
+              </label>
+            </div>
           </div>
           <div>
             <label className={LABEL} style={{ color: '#64748b' }}>{locale === 'fr' ? 'Statut' : 'Status'}</label>

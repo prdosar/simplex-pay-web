@@ -17,7 +17,8 @@ public record UpdateOfferCommand(
     decimal MinAmount,
     decimal? MaxAmount,
     string? Notes,
-    DateTime ExpiresAt,
+    // Null = ne jamais expirer.
+    DateTime? ExpiresAt,
     string Status,
     IList<Guid>? PaymentMethodIds,
     // Null = ne pas toucher aux pays. Sinon liste complète (au moins 1, tous même devise que l'offre).

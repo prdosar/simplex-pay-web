@@ -88,7 +88,8 @@ export interface OfferDto {
   minAmount: number
   maxAmount: number | null
   status: string
-  expiresAt: string
+  /** Null = ne jamais expirer (offres devises). Le créateur clôture manuellement. */
+  expiresAt: string | null
   createdAt: string
   creator: OfferCreatorDto
   paymentMethods: OfferPaymentMethodDto[]
