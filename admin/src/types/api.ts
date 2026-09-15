@@ -142,3 +142,35 @@ export interface BoatShippingOfferDto {
   expiresAt: string
   createdAt: string
 }
+
+// ─────────── Admin — Moyens de paiement par pays ───────────
+export type PaymentMethodType = 'Cash' | 'BankTransfer' | 'MobileMoney' | 'Other'
+
+export interface AdminCountrySummary {
+  code: string
+  name: string
+  nameFr: string
+  currencyCode: string
+  flag: string
+  paymentMethodCount: number
+}
+
+export interface AdminCountryPaymentMethod {
+  id: string
+  name: string
+  description: string | null
+  type: PaymentMethodType
+  isActive: boolean
+  isPopular: boolean
+  offerUsageCount: number
+}
+
+export interface AdminPaymentMethod {
+  id: string
+  name: string
+  description: string | null
+  type: PaymentMethodType
+  isActive: boolean
+  countryCount: number
+  offerUsageCount: number
+}

@@ -5,6 +5,7 @@ import { useTranslations, useLocale } from 'next-intl'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import NotificationBell from './NotificationBell'
 
 export default function Navbar() {
   const t = useTranslations('nav')
@@ -57,6 +58,7 @@ export default function Navbar() {
 
             {isAuthenticated ? (
               <div className="flex items-center gap-3">
+                <NotificationBell />
                 <Link
                   href={`/${locale}/mon-compte`}
                   className="text-sm font-medium text-[--color-foreground] hover:text-[--color-primary]"

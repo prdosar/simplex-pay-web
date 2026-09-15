@@ -22,6 +22,8 @@ public static class DependencyInjection
         services.AddScoped<IBoatShippingOfferRepository, BoatShippingOfferRepository>();
         services.AddScoped<IReviewRepository, ReviewRepository>();
         services.AddScoped<ICurrencyRepository, CurrencyRepository>();
+        services.AddScoped<IPaymentMethodAdminRepository, PaymentMethodAdminRepository>();
+        services.AddScoped<INotificationRepository, NotificationRepository>();
         services.AddScoped<ITokenService, TokenService>();
         services.AddSingleton<IPasswordHasher, PasswordHasherService>();
         services.AddScoped<IEmailService, EmailService>();

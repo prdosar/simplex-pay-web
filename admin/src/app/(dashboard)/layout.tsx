@@ -20,6 +20,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { href: '/dashboard', label: 'Tableau de bord', icon: '📊' },
     { href: '/users', label: 'Utilisateurs', icon: '👥' },
     { href: '/offers', label: 'Offres', icon: '💱' },
+    { href: '/payment-methods', label: 'Moyens de paiement', icon: '💳' },
     { href: '/activity', label: 'Activité', icon: '📜' },
   ]
 

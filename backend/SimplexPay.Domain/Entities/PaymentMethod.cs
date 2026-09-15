@@ -18,4 +18,13 @@ public class PaymentMethod
 
     public static PaymentMethod Create(string name, PaymentMethodType type, string? description = null) =>
         new() { Name = name, Type = type, Description = description };
+
+    public void Update(string name, string? description, PaymentMethodType type, bool isActive)
+    {
+        if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Le nom est requis.");
+        Name = name.Trim();
+        Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim();
+        Type = type;
+        IsActive = isActive;
+    }
 }

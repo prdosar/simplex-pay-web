@@ -104,3 +104,82 @@ public record AdminUpdateUserProfileRequest(
     string PhoneNumber,
     string? WhatsAppNumber
 );
+
+// ─────────────────────────── Moyens de paiement (par pays) ───────────────────────────
+[ApiController]
+[Route("api/admin/payment-methods")]
+[Authorize(Policy = "AdminOnly")]
+public class AdminPaymentMethodsController(IMediator mediator) : ControllerBase
+{
+    /// <summary>Liste tous les pays avec le nombre de moyens de paiement rattachés.</summary>
+    [HttpGet("countries")]
+    public async Task<IActionResult> GetCountries(CancellationToken ct) =>
+        Ok(await mediator.Send(new SimplexPay.Application.Features.Admin.Queries.GetAdminCountriesQuery(), ct));
+
+    /// <summary>Moyens de paiement rattachés à un pays (avec IsPopular + usage).</summary>
+    [HttpGet("countries/{code}")]
+    public async Task<IActionResult> GetCountryPaymentMethods(string code, CancellationToken ct) =>
+        Ok(await mediator.Send(new SimplexPay.Application.Features.Admin.Queries.GetAdminCountryPaymentMethodsQuery(code), ct));
+
+    /// <summary>Liste globale des moyens de paiement (pour la sélection "rattacher un existant").</summary>
+    [HttpGet]
+    public async Task<IActionResult> GetAll(CancellationToken ct) =>
+        Ok(await mediator.Send(new SimplexPay.Application.Features.Admin.Queries.GetAllPaymentMethodsQuery(), ct));
+
+    /// <summary>Rattache un moyen de paiement existant à un pays.</summary>
+    [HttpPost("countries/{code}/attach")]
+    public async Task<IActionResult> Attach(string code, [FromBody] AttachPmRequest req, CancellationToken ct)
+    {
+        await mediator.Send(new SimplexPay.Application.Features.Admin.Commands.AttachPaymentMethodToCountryCommand(
+            code, req.PaymentMethodId, req.IsPopular), ct);
+        return NoContent();
+    }
+
+    /// <summary>Crée un nouveau moyen de paiement (typiquement un mobile money) et le rattache au pays.</summary>
+    [HttpPost("countries/{code}/create")]
+    public async Task<IActionResult> CreateAndAttach(string code, [FromBody] CreatePmRequest req, CancellationToken ct)
+    {
+        var dto = await mediator.Send(new SimplexPay.Application.Features.Admin.Commands.CreatePaymentMethodForCountryCommand(
+            code, req.Name, req.Description, req.Type, req.IsPopular), ct);
+        return CreatedAtAction(nameof(GetCountryPaymentMethods), new { code }, dto);
+    }
+
+    /// <summary>Détache un moyen de paiement d'un pays (ne supprime pas le PM globalement).</summary>
+    [HttpDelete("countries/{code}/{pmId:guid}")]
+    public async Task<IActionResult> Detach(string code, Guid pmId, CancellationToken ct)
+    {
+        await mediator.Send(new SimplexPay.Application.Features.Admin.Commands.DetachPaymentMethodFromCountryCommand(code, pmId), ct);
+        return NoContent();
+    }
+
+    /// <summary>Bascule l'état "populaire" d'un moyen de paiement pour un pays.</summary>
+    [HttpPatch("countries/{code}/{pmId:guid}/popularity")]
+    public async Task<IActionResult> SetPopularity(string code, Guid pmId, [FromBody] PopularityRequest req, CancellationToken ct)
+    {
+        await mediator.Send(new SimplexPay.Application.Features.Admin.Commands.SetPaymentMethodPopularityCommand(
+            code, pmId, req.IsPopular), ct);
+        return NoContent();
+    }
+
+    /// <summary>Renomme / met à jour un moyen de paiement (affecte tous les pays où il est rattaché).</summary>
+    [HttpPatch("{pmId:guid}")]
+    public async Task<IActionResult> Update(Guid pmId, [FromBody] UpdatePmRequest req, CancellationToken ct)
+    {
+        await mediator.Send(new SimplexPay.Application.Features.Admin.Commands.UpdatePaymentMethodCommand(
+            pmId, req.Name, req.Description, req.Type, req.IsActive), ct);
+        return NoContent();
+    }
+
+    /// <summary>Supprime définitivement un moyen de paiement. Bloqué si des offres l'utilisent.</summary>
+    [HttpDelete("{pmId:guid}")]
+    public async Task<IActionResult> Delete(Guid pmId, CancellationToken ct)
+    {
+        await mediator.Send(new SimplexPay.Application.Features.Admin.Commands.DeletePaymentMethodCommand(pmId), ct);
+        return NoContent();
+    }
+}
+
+public record AttachPmRequest(Guid PaymentMethodId, bool IsPopular);
+public record CreatePmRequest(string Name, string? Description, string Type, bool IsPopular);
+public record PopularityRequest(bool IsPopular);
+public record UpdatePmRequest(string Name, string? Description, string Type, bool IsActive);

@@ -1,6 +1,6 @@
 'use client'
 
-import { use } from 'react'
+import { use, useState } from 'react'
 import useSWR from 'swr'
 import Link from 'next/link'
 import { useTranslations, useLocale } from 'next-intl'
@@ -8,6 +8,7 @@ import { api } from '@/lib/api'
 import { flagUrl } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
 import ReviewForm from '@/components/reviews/ReviewForm'
+import InquireOfferModal from '@/components/offers/InquireOfferModal'
 import type { OfferDto, PagedResult, ReviewDto } from '@/types/api'
 
 export default function OfferDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -15,6 +16,7 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
   const t = useTranslations('offer')
   const locale = useLocale()
   const { isAuthenticated, user: me } = useAuth()
+  const [showInquire, setShowInquire] = useState(false)
 
   const { data: offer, isLoading, error } = useSWR<OfferDto>(
     `/api/offers/${id}`,
@@ -227,6 +229,16 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
                     💬 WhatsApp: {offer.creator.whatsApp}
                   </a>
                 )}
+                {/* Inquiry — pas visible sur ses propres offres */}
+                {me?.id !== offer.creator.id && (
+                  <button
+                    onClick={() => setShowInquire(true)}
+                    className="mt-2 w-full flex items-center justify-center gap-2 py-2.5 text-sm font-semibold rounded-lg border transition-colors hover:bg-white"
+                    style={{ borderColor: '#0d9488', color: '#0d9488' }}
+                  >
+                    ✉️ {locale === 'fr' ? "Demander si l'offre est encore disponible" : 'Ask if this offer is still available'}
+                  </button>
+                )}
               </div>
             ) : (
               <div className="bg-[--color-muted] rounded-xl p-5 text-center">
@@ -323,6 +335,16 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
           onSaved={() => mutateReviews()}
         />
       </div>
+
+      {showInquire && (
+        <InquireOfferModal
+          offerId={offer.id}
+          offerLabel={`${offer.sellCurrency} → ${offer.buyCurrency}`}
+          creatorFirstName={offer.creator.firstName}
+          locale={locale}
+          onClose={() => setShowInquire(false)}
+        />
+      )}
     </div>
   )
 }

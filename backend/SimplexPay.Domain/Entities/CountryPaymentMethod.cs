@@ -14,4 +14,6 @@ public class CountryPaymentMethod
 
     public static CountryPaymentMethod Create(string countryCode, Guid paymentMethodId, bool isPopular = false) =>
         new() { CountryCode = countryCode, PaymentMethodId = paymentMethodId, IsPopular = isPopular };
+
+    public void SetPopularity(bool isPopular) => IsPopular = isPopular;
 }

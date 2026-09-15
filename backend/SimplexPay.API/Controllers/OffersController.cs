@@ -133,6 +133,17 @@ public class OffersController(IMediator mediator) : ControllerBase
         return Created($"/api/offers/{result.Id}", result);
     }
 
+    /// <summary>Un utilisateur demande au posteur si son offre est encore disponible.
+    /// Crée une notification + envoie un email. Message optionnel (500 chars max).</summary>
+    [HttpPost("{id:guid}/inquire")]
+    [Authorize]
+    [RequireVerifiedEmail]
+    public async Task<IActionResult> InquireOffer(Guid id, [FromBody] InquireOfferRequest req, CancellationToken ct)
+    {
+        await mediator.Send(new InquireOfferCommand(id, CurrentUserId, req.Message), ct);
+        return NoContent();
+    }
+
     /// <summary>Annule une offre (créateur uniquement, email vérifié).</summary>
     [HttpDelete("{id:guid}/cancel")]
     [Authorize]
@@ -184,6 +195,8 @@ public record UpdateOfferRequest(
     // Null = pas de changement. Sinon liste complète des pays (≥1, tous même devise que l'offre).
     IList<string>? SellCountryCodes = null
 );
+
+public record InquireOfferRequest(string? Message);
 
 public record CreateOfferRequest(
     // Multi-pays : au moins 1. Tous doivent partager la même devise (UEMOA/CEMAC). La devise

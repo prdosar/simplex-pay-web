@@ -180,6 +180,22 @@ export interface AuthResponse {
   user: UserDto
 }
 
+export interface NotificationDto {
+  id: string
+  type: 'OfferInquiry' | 'NewReview' | string
+  title: string
+  body: string
+  link: string | null
+  isRead: boolean
+  createdAt: string
+}
+
+export interface PagedNotifications {
+  items: NotificationDto[]
+  total: number
+  unreadCount: number
+}
+
 // Aligné avec backend/SimplexPay.Application/Features/Auth/Dtos/AuthResponse.cs UserDto.
 export interface UserDto {
   id: string
